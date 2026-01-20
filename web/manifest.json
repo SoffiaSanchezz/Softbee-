@@ -1,6 +1,6 @@
 {
-    "name": "clean_architecture_app",
-    "short_name": "clean_architecture_app",
+    "name": "Softbee",
+    "short_name": "Softbee",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
