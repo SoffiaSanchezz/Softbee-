@@ -1,86 +1,150 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/usecase/usecase.dart';
+import '../../../../core/error/failures.dart';
 import '../../core/entities/user.dart';
+import '../../core/usecase/check_auth_status_usecase.dart';
+import '../../core/usecase/get_user_from_token_usecase.dart';
 import '../../core/usecase/login_usecase.dart';
+import '../../core/usecase/logout_usecase.dart';
 import '../../core/usecase/register_usecase.dart';
-import '../../core/repositories/auth_repository.dart';
-import '../../data/datasources/auth_remote_datasource.dart';
-import '../../data/repositories/auth_repository_impl.dart';
+// import '../../data/datasources/auth_local_datasource.dart';
 
 class AuthState {
   final bool isLoading;
   final User? user;
   final String? error;
+  final bool isRegistered;
+  final bool isAuthenticating; // For initial auth check
+  final String? token;
 
   const AuthState({
     this.isLoading = false,
     this.user,
     this.error,
+    this.isRegistered = false,
+    this.isAuthenticating = true,
+    this.token,
   });
 
   bool get isAuthenticated => user != null;
-}
 
+  AuthState copyWith({
+    bool? isLoading,
+    User? user,
+    String? error,
+    bool? isRegistered,
+    bool? isAuthenticating,
+    String? token,
+  }) {
+    return AuthState(
+      isLoading: isLoading ?? this.isLoading,
+      user: user ?? this.user,
+      error: error,
+      isRegistered: isRegistered ?? this.isRegistered,
+      isAuthenticating: isAuthenticating ?? this.isAuthenticating,
+      token: token ?? this.token,
+    );
+  }
+}
 
 class AuthController extends StateNotifier<AuthState> {
   final LoginUseCase loginUseCase;
   final RegisterUseCase registerUseCase;
+  final LogoutUseCase logoutUseCase;
+  final CheckAuthStatusUseCase checkAuthStatusUseCase;
+  final GetUserFromTokenUseCase getUserFromTokenUseCase;
 
   AuthController({
     required this.loginUseCase,
     required this.registerUseCase,
+    required this.logoutUseCase,
+    required this.checkAuthStatusUseCase,
+    required this.getUserFromTokenUseCase,
   }) : super(const AuthState());
 
+  Future<void> checkAuthStatus() async {
+    state = state.copyWith(isAuthenticating: true);
+    final result = await checkAuthStatusUseCase(NoParams());
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          isAuthenticating: false,
+          user: null,
+          error: _mapFailureToMessage(failure),
+        );
+      },
+      (user) {
+        state = state.copyWith(isAuthenticating: false, user: user);
+      },
+    );
+  }
+
   Future<void> login(String email, String password) async {
-    state = const AuthState(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null);
 
-    try {
-      final user = await loginUseCase(LoginParams(email, password));
-      state = AuthState(user: user);
-    } catch (e) {
-      state = const AuthState(error: 'Login failed');
+    final loginResult = await loginUseCase(LoginParams(email, password));
+
+    await loginResult.fold(
+      (failure) async {
+        state = state.copyWith(
+          isLoading: false,
+          error: _mapFailureToMessage(failure),
+        );
+      },
+      (token) async {
+        final userResult = await getUserFromTokenUseCase(token);
+        userResult.fold(
+          (failure) {
+            state = state.copyWith(
+              isLoading: false,
+              user: null,
+              error: _mapFailureToMessage(failure),
+            );
+          },
+          (user) {
+            state = state.copyWith(isLoading: false, user: user, token: token);
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> logout() async {
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await logoutUseCase(NoParams());
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          isLoading: false,
+          error: _mapFailureToMessage(failure),
+        );
+      },
+      (_) {
+        state = const AuthState(isAuthenticating: false); // Reset state completely
+      },
+    );
+  }
+
+  String _mapFailureToMessage(Failure failure) {
+    switch (failure.runtimeType) {
+      case ServerFailure:
+        return (failure as ServerFailure).message;
+      case CacheFailure:
+        return (failure as CacheFailure).message;
+      case NetworkFailure:
+        return (failure as NetworkFailure).message;
+      case AuthFailure:
+        return (failure as AuthFailure).message;
+      case InvalidInputFailure:
+        return (failure as InvalidInputFailure).message;
+      default:
+        return 'An unexpected error occurred.';
     }
   }
 
-  Future<void> register(String email, String password) async {
-    state = const AuthState(isLoading: true);
-
-    try {
-      final user = await registerUseCase(RegisterParams(email, password));
-      state = AuthState(user: user);
-    } catch (e) {
-      state = const AuthState(error: 'Register failed');
-    }
-  }
-
-  void logout() {
-    state = const AuthState();
+  void resetRegisterStatus() {
+    state = state.copyWith(isRegistered: false);
   }
 }
 
-
-final authRemoteDataSourceProvider =
-    Provider<AuthRemoteDataSource>((ref) {
-  return AuthRemoteDataSourceImpl();
-});
-
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepositoryImpl(
-    ref.read(authRemoteDataSourceProvider),
-  );
-});
-
-final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
-  return LoginUseCase(ref.read(authRepositoryProvider));
-});
-
-final registerUseCaseProvider = Provider<RegisterUseCase>((ref) {
-  return RegisterUseCase(ref.read(authRepositoryProvider));
-});
-
-final authControllerProvider =
-    StateNotifierProvider<AuthController, AuthState>((ref) {
-  return AuthController(
-    loginUseCase: ref.read(loginUseCaseProvider),
-    registerUseCase: ref.read(registerUseCaseProvider),
-  );
-});
