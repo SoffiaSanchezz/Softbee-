@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../core/router/app_routes.dart';
-import '../../../../core/widgets/honeycomb_loader.dart';
 import '../providers/auth_providers.dart';
 import '../providers/login_state.dart';
 import '../providers/login_controller.dart';
@@ -108,9 +108,10 @@ class _LoginPageContentState extends ConsumerState<_LoginPageContent> {
         child: SafeArea(
           child: loginState.isLoading
               ? Center(
-                  child: HoneycombLoader(
-                    color: AppColors.primaryYellow,
-                    size: 200.0, // Aumentado para hexágonos más grandes
+                  child: Lottie.asset(
+                    'assets/animations/LoadHIVE.json',
+                    width: 200.0,
+                    height: 200.0,
                   ),
                 )
               : isDesktop
@@ -664,9 +665,10 @@ class _LoginPageContentState extends ConsumerState<_LoginPageContent> {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         child: isLoading
-            ? HoneycombLoader(
-                color: Colors.white,
-                size: 50.0, // Tamaño para el botón
+            ? Lottie.asset(
+                'assets/animations/LoadHIVE.json',
+                width: 50.0,
+                height: 50.0,
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,

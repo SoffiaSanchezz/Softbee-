@@ -1,4 +1,5 @@
-import 'package:Softbee/features/auth/data/datasources/auth_local_datasource.dart';
+import 'package:Softbee/feature/auth/data/datasources/auth_local_datasource.dart';
+import 'package:Softbee/feature/auth/data/repositories/auth_repository_impl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/repositories/auth_repository.dart';
 // import '../../data/datasources/auth_local_datasource.dart';
@@ -10,11 +11,19 @@ import '../../core/usecase/login_usecase.dart';
 import '../../core/usecase/logout_usecase.dart';
 import '../../core/usecase/register_usecase.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/forgot_password_controller.dart';
+import '../controllers/reset_password_controller.dart';
 import 'login_controller.dart'; // Import the new login controller
 import 'login_state.dart'; // Import the new login state
+import 'forgot_password_state.dart';
+import 'reset_password_state.dart';
 
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
   return AuthRemoteDataSourceImpl();
+});
+
+final authLocalDataSourceProvider = Provider<AuthLocalDataSource>((ref) {
+  return AuthLocalDataSourceImpl();
 });
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -60,5 +69,15 @@ final loginControllerProvider =
   final loginUseCase = ref.watch(loginUseCaseProvider);
   final authController = ref.watch(authControllerProvider.notifier); // Get notifier for actions
   return LoginController(loginUseCase, authController);
+});
+
+final forgotPasswordControllerProvider = StateNotifierProvider.autoDispose<
+    ForgotPasswordController, ForgotPasswordState>((ref) {
+  return ForgotPasswordController();
+});
+
+final resetPasswordControllerProvider = StateNotifierProvider.autoDispose<
+    ResetPasswordController, ResetPasswordState>((ref) {
+  return ResetPasswordController();
 });
 
