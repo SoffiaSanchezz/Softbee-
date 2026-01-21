@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 // import 'package:softbee/feature/auth/presentation/controllers/auth_controller.dart';
 import '../../feature/auth/presentation/providers/auth_providers.dart';
 import '../widgets/dashboard_menu.dart';
+import '../pages/not_found_page.dart'; // Importar NotFoundPage
 import 'app_routes.dart';
 import '../../feature/auth/presentation/router/auth_routes.dart';
 
@@ -38,5 +39,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       return null;
     },
+    errorBuilder: (context, state) => const NotFoundPage(), // Añadir errorBuilder
   );
 });
