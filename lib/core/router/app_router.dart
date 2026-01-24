@@ -1,17 +1,22 @@
 // core/router/app_router.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-// import 'package:softbee/feature/auth/presentation/controllers/auth_controller.dart';
+import 'package:flutter/foundation.dart' show kIsWeb; // Importar kIsWeb
 import '../../feature/auth/presentation/providers/auth_providers.dart';
 import '../widgets/dashboard_menu.dart';
 import '../pages/not_found_page.dart'; // Importar NotFoundPage
+import '../pages/landing_page.dart'; // Importar LandingPage
 import 'app_routes.dart';
 import '../../feature/auth/presentation/router/auth_routes.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: AppRoutes.login,
+    initialLocation: kIsWeb ? AppRoutes.landing : AppRoutes.login, // Lógica de detección de plataforma
     routes: [
+      GoRoute(
+        path: AppRoutes.landing, // Ruta para Landing Page
+        builder: (context, state) => const LandingPage(),
+      ),
       ...authRoutes,
       GoRoute(
         path: AppRoutes.dashboard,
@@ -22,18 +27,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authControllerProvider);
       final isLoggedIn = authState.isAuthenticated;
       final isAuthRoute = state.matchedLocation == AppRoutes.login ||
-          state.matchedLocation == AppRoutes.register;
+          state.matchedLocation.startsWith(AppRoutes.resetPassword.split(':')[0]); // Incluir resetPassword
+      final isLandingRoute = state.matchedLocation == AppRoutes.landing;
+
 
       // If we are still checking the authentication status, don't redirect yet
       if (authState.isAuthenticating) {
         return null; // Or a loading screen route
       }
 
-      if (!isLoggedIn && !isAuthRoute) {
+      // Si no está logueado y no está en una ruta de autenticación o landing, redirigir al login
+      if (!isLoggedIn && !isAuthRoute && !isLandingRoute) {
         return AppRoutes.login;
       }
-
-      if (isLoggedIn && isAuthRoute) {
+      
+      // Si está logueado y en una ruta de autenticación o landing, redirigir al dashboard
+      if (isLoggedIn && (isAuthRoute || isLandingRoute)) {
         return AppRoutes.dashboard;
       }
 

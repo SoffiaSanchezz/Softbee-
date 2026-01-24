@@ -1,13 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/usecase/usecase.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/usecase/usecase.dart';
 import '../../core/entities/user.dart';
 import '../../core/usecase/check_auth_status_usecase.dart';
 import '../../core/usecase/get_user_from_token_usecase.dart';
 import '../../core/usecase/login_usecase.dart';
 import '../../core/usecase/logout_usecase.dart';
 import '../../core/usecase/register_usecase.dart';
-// import '../../data/datasources/auth_local_datasource.dart';
 
 class AuthState {
   final bool isLoading;
@@ -49,17 +48,19 @@ class AuthState {
 
 class AuthController extends StateNotifier<AuthState> {
   final LoginUseCase loginUseCase;
-  final RegisterUseCase registerUseCase;
   final LogoutUseCase logoutUseCase;
   final CheckAuthStatusUseCase checkAuthStatusUseCase;
   final GetUserFromTokenUseCase getUserFromTokenUseCase;
+  final RegisterUseCase registerUseCase; // Add RegisterUseCase
+  // final CreateApiaryUseCase createApiaryUseCase; // Se inyectará en RegisterController
 
   AuthController({
     required this.loginUseCase,
-    required this.registerUseCase,
     required this.logoutUseCase,
     required this.checkAuthStatusUseCase,
     required this.getUserFromTokenUseCase,
+    required this.registerUseCase, // Initialize RegisterUseCase
+    // required this.createApiaryUseCase,
   }) : super(const AuthState());
 
   Future<void> checkAuthStatus() async {
@@ -106,6 +107,50 @@ class AuthController extends StateNotifier<AuthState> {
             state = state.copyWith(isLoading: false, user: user, token: token);
           },
         );
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> register(
+    String name, // Este 'name' es de la UI, no se pasa al backend directamente
+    String username,
+    String email,
+    String phone,
+    String password,
+    // final List<Map<String, dynamic>> apiaries, // Eliminado de aquí
+  ) async {
+    state = state.copyWith(isLoading: true, error: null, isRegistered: false);
+
+    final registerResult = await registerUseCase(
+      RegisterParams(
+        name: name,
+        username: username,
+        email: email,
+        phone: phone,
+        password: password,
+      ),
+    );
+
+    return await registerResult.fold(
+      (failure) {
+        state = state.copyWith(
+          isLoading: false,
+          error: _mapFailureToMessage(failure),
+          isRegistered: false,
+        );
+        throw Exception(_mapFailureToMessage(failure));
+      },
+      (data) {
+        final token = data['access_token'] as String; // Usar 'access_token' para consistencia
+        final user = User.fromJson(data['user']); // Asume que 'user' es un Map
+        state = state.copyWith(
+          isLoading: false,
+          isRegistered: true,
+          user: user,
+          token: token,
+          error: null,
+        );
+        return {'token': token, 'user': user};
       },
     );
   }
