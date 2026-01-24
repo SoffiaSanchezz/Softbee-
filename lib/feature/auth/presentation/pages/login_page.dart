@@ -471,10 +471,10 @@ class _LoginPageContentState extends ConsumerState<_LoginPageContent> {
             ),
           _buildTextField(
             controller: _identifierController,
-            label: 'Usuario o Email',
-            hint: 'ejemplo@correo.com o tu_usuario',
+            label: 'Email',
+            hint: 'ejemplo@correo.com',
             icon: Icons.person_outline,
-            keyboardType: TextInputType.text,
+            keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (loginState.showValidationErrors &&
                   (value == null || value.isEmpty)) {
@@ -543,15 +543,16 @@ class _LoginPageContentState extends ConsumerState<_LoginPageContent> {
             ),
           ),
           SizedBox(height: verticalSpacing),
-          _buildDivider(),
+          _buildDivider(), // Añadir el divisor
           SizedBox(height: verticalSpacing),
           SizedBox(
             height: buttonHeight,
-            child: _buildRegisterButton(
+            child: _buildRegisterButton( // Añadir el botón de registro
               context: context,
               fontSize: subtitleSize,
             ),
           ),
+
         ],
       ),
     );
@@ -667,8 +668,8 @@ class _LoginPageContentState extends ConsumerState<_LoginPageContent> {
         child: isLoading
             ? Lottie.asset(
                 'assets/animations/LoadHIVE.json',
-                width: 50.0,
-                height: 50.0,
+                width: 40.0,
+                height: 40.0,
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -777,10 +778,4 @@ class _LoginPageContentState extends ConsumerState<_LoginPageContent> {
   }
 }
 
-class AppColors {
-  static const Color lightYellow = Color(0xFFFFF9C4);
-  static const Color primaryYellow = Color(0xFFFFC107);
-  static const Color accentYellow = Color(0xFFFFD54F);
-  static const Color darkYellow = Color(0xFFFFA000);
-  static const Color textDark = Color(0xFF333333);
-}
+
