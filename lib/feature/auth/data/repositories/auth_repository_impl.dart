@@ -3,11 +3,10 @@ import 'package:Softbee/feature/auth/data/datasources/auth_remote_datasource.dar
 import 'package:either_dart/either.dart';
 
 import '../../../../core/error/failures.dart';
-import '../../core/entities/apiary.dart';
 import '../../core/entities/user.dart';
 import '../../core/repositories/auth_repository.dart';
 // import '../datasources/auth_local_datasource.dart';
-import '../datasources/auth_remote_datasource.dart';
+// import '../datasources/auth_remote_datasource.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -17,6 +16,21 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.remoteDataSource,
     required this.localDataSource,
   });
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> registerUser(
+      String username,
+      String email,
+      String phone,
+      String password) async {
+    try {
+      final result = await remoteDataSource.registerUser(
+          username, email, phone, password);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 
   @override
   Future<Either<Failure, String>> login(String email, String password) async {
@@ -40,6 +54,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(user);
     } catch (e) {
       await localDataSource.deleteToken();
+      await localDataSource.deleteUser(); // También eliminar el usuario al expirar la sesión
       return const Left(AuthFailure('Session expired. Please log in again.'));
     }
   }
@@ -49,6 +64,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await remoteDataSource.logout();
       await localDataSource.deleteToken();
+      await localDataSource.deleteUser(); // También eliminar el usuario al cerrar sesión
       return const Right(null);
     } catch (e) {
       return const Left(ServerFailure('Error during logout'));
@@ -66,22 +82,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, User>> register({
-    required String name,
-    required String email,
-    required String phone,
-    required String password,
-    required List<Apiary> apiaries,
-  }) async {
+  Future<Either<Failure, void>> createApiary(String userId, String apiaryName,
+      String location, int beehivesCount, bool treatments, String token) async {
     try {
-      final user = await remoteDataSource.register(
-        name: name,
-        email: email,
-        phone: phone,
-        password: password,
-        apiaries: apiaries,
-      );
-      return Right(user);
+      await remoteDataSource.createApiary(
+          userId, apiaryName, location, beehivesCount, treatments, token);
+      return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
