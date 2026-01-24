@@ -1,38 +1,37 @@
-import '../../../../core/error/failures.dart';
 import 'package:either_dart/either.dart';
-import '../entities/apiary.dart';
-import '../entities/user.dart';
+import '../../../../core/error/failures.dart';
+import '../../../../core/usecase/usecase.dart';
 import '../repositories/auth_repository.dart';
+import '../../core/entities/user.dart';
 
 class RegisterParams {
-  final String name;
+  final String name; // Campo que se usa solo en la UI para display o generación de username
+  final String username;
   final String email;
   final String phone;
   final String password;
-  final List<Apiary> apiaries;
 
   RegisterParams({
     required this.name,
+    required this.username,
     required this.email,
     required this.phone,
     required this.password,
-    required this.apiaries,
   });
 }
 
-class RegisterUseCase {
+class RegisterUseCase implements UseCase<Map<String, dynamic>, RegisterParams> {
   final AuthRepository repository;
 
   RegisterUseCase(this.repository);
 
-  Future<Either<Failure, User>> call(RegisterParams params) {
-    return repository.register(
-      name: params.name,
-      email: params.email,
-      phone: params.phone,
-      password: params.password,
-      apiaries: params.apiaries,
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> call(RegisterParams params) async {
+    return await repository.registerUser(
+      params.username,
+      params.email,
+      params.phone,
+      params.password,
     );
   }
 }
-
