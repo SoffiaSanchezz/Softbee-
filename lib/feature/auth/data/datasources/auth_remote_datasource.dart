@@ -40,22 +40,49 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         },
       );
 
-      if (response.statusCode == 201) {
-        final token = response.data['access_token'];
-        final userData = response.data['user'];
+              if (response.statusCode == 201) {
 
-        if (token != null && userData != null) {
-          final user = User.fromJson(userData);
-          await localDataSource.saveUser(user);
-          await localDataSource.saveToken(token); // Guardar el token aquí
-          return {
-            'access_token': token,
-            'user': user,
-          };
-        } else {
-          throw Exception('Token o datos de usuario no recibidos del servidor');
-        }
-      } else {
+                final token = response.data['access_token'];
+
+                // Extraer los campos directamente de response.data
+
+                final user = User(
+
+                  id: response.data['user_id'] ?? '', // Backend envía 'user_id'
+
+                  email: response.data['email'] ?? '',
+
+                  username: response.data['username'] ?? '',
+
+                  isVerified: response.data['is_verified'] ?? false, // Asegúrate de que estos campos existan en la respuesta del backend o proporciona un valor predeterminado
+
+                  isActive: response.data['is_active'] ?? true, // Asegúrate de que estos campos existan en la respuesta del backend o proporciona un valor predeterminado
+
+                );
+
+                
+
+                if (token != null) {
+
+                  await localDataSource.saveUser(user);
+
+                  await localDataSource.saveToken(token);
+
+                  return {
+
+                    'access_token': token,
+
+                    'user': user,
+
+                  };
+
+                } else {
+
+                  throw Exception('Token de acceso no recibido del servidor');
+
+                }
+
+              } else {
         throw Exception(response.data['message'] ?? 'Error de registro');
       }
     } on DioException catch (e) {

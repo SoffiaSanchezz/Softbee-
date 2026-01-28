@@ -142,7 +142,7 @@ class AuthController extends StateNotifier<AuthState> {
       },
       (data) {
         final token = data['access_token'] as String; // Usar 'access_token' para consistencia
-        final user = User.fromJson(data['user']); // Asume que 'user' es un Map
+        final user = data['user'] as User;
         state = state.copyWith(
           isLoading: false,
           isRegistered: true,
