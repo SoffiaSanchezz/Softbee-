@@ -82,7 +82,7 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, isAuthenticating: true, error: null);
 
     final loginResult = await loginUseCase(LoginParams(email, password));
 
@@ -90,6 +90,7 @@ class AuthController extends StateNotifier<AuthState> {
       (failure) async {
         state = state.copyWith(
           isLoading: false,
+          isAuthenticating: false,
           error: _mapFailureToMessage(failure),
         );
       },
@@ -99,12 +100,18 @@ class AuthController extends StateNotifier<AuthState> {
           (failure) {
             state = state.copyWith(
               isLoading: false,
+              isAuthenticating: false,
               user: null,
               error: _mapFailureToMessage(failure),
             );
           },
           (user) {
-            state = state.copyWith(isLoading: false, user: user, token: token);
+            state = state.copyWith(
+              isLoading: false,
+              isAuthenticating: false,
+              user: user,
+              token: token,
+            );
           },
         );
       },

@@ -109,12 +109,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       if (response.statusCode == 200) {
         final token = response.data['access_token'];
-        final userData = response.data['user'];
-
-        if (token != null && userData != null) {
-          final user = User.fromJson(userData);
+        
+        if (token != null && response.data['user_id'] != null) {
+          // Corregido: Construir el usuario directamente desde la respuesta plana.
+          final user = User(
+            id: response.data['user_id'],
+            email: response.data['email'],
+            username: response.data['username'],
+            isVerified: response.data['is_verified'] ?? false,
+            isActive: response.data['is_active'] ?? true,
+          );
           await localDataSource.saveUser(user); // Guardar el objeto User
-          await localDataSource.saveToken(token); // Guardar el token también para mantener la sesión
+          await localDataSource.saveToken(token); // Guardar el token
           return token;
         } else {
           throw Exception('Token o datos de usuario no recibidos del servidor');
