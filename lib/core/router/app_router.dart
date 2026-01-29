@@ -6,6 +6,7 @@ import '../../feature/auth/presentation/providers/auth_providers.dart';
 import '../widgets/dashboard_menu.dart';
 import '../pages/not_found_page.dart'; // Importar NotFoundPage
 import '../pages/landing_page.dart'; // Importar LandingPage
+import '../../feature/auth/presentation/pages/user_management_page.dart'; // Importar la nueva página
 import 'app_routes.dart';
 import '../../feature/auth/presentation/router/auth_routes.dart';
 
@@ -21,6 +22,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.dashboard,
         builder: (context, state) => const MenuScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.profile, // Añadir la nueva ruta de perfil
+        builder: (context, state) => const UserManagementPage(),
       ),
     ],
     redirect: (context, state) {

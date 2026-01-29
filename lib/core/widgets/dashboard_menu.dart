@@ -23,7 +23,7 @@ class MenuScreen extends ConsumerWidget { // Cambiar a ConsumerWidget
             tooltip: 'Configuración',
             onPressed: () {
               // Navegar a la página de gestión de usuario o perfil
-              // GoRouter.of(context).go(AppRoutes.userProfile); // Asumiendo una ruta de perfil
+              GoRouter.of(context).push(AppRoutes.profile);
             },
           ),
           const SizedBox(width: 8),
