@@ -1,8 +1,8 @@
 import 'package:Softbee/feature/auth/presentation/pages/user_management_page.dart';
+import 'package:Softbee/feature/auth/presentation/providers/auth_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:Softbee/feature/auth/presentation/providers/auth_providers.dart';
 // import 'package:Softbee/features/user/presentation/pages/user_management_page.dart';
 
 class UserProfileHeader extends ConsumerWidget {
@@ -28,96 +28,209 @@ class UserProfileHeader extends ConsumerWidget {
     // Si el usuario está autenticado, muestra el perfil clickeable
     if (authState.isAuthenticated && authState.user != null) {
       final user = authState.user!;
+      final screenWidth = MediaQuery.of(context).size.width;
+      final isSmallScreen = screenWidth < 360;
+      final isMobile = screenWidth < 600;
+
+      final userName = user.username;
+      final userEmail = user.email;
+
       return Padding(
         padding: const EdgeInsets.only(right: 8.0),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(30),
-            onTap: () {
-              // Navegar a la página de perfil del usuario
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const UserManagementPage(),
-                ),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFBBF24).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: const Color(0xFFFBBF24).withOpacity(0.3),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Avatar del usuario
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFC107), Color(0xFFFF8F00)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFFC107).withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 18,
+        child: PopupMenuButton<String>(
+          offset: const Offset(0, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 8 : 12,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Avatar
+                CircleAvatar(
+                  backgroundColor: Color.fromRGBO(255, 193, 7, 0.2),
+                  child: Text(
+                    userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                    style: GoogleFonts.poppins(
+                      fontSize: isSmallScreen ? 12 : 14,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFFF57C00),
                     ),
                   ),
+                ),
+                // Mostrar nombre solo en pantallas grandes
+                if (!isMobile) ...[
                   const SizedBox(width: 8),
-                  // Nombre y rol del usuario
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 120),
+                    child: Text(
+                      userName,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF424242),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 18,
+                    color: Color(0xFF9E9E9E),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          itemBuilder: (context) => [
+            // Header del menu con info del usuario
+            PopupMenuItem<String>(
+              enabled: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        user.username,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: const Color(0xFF1F2937),
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Color.fromRGBO(255, 193, 7, 0.2),
+                        child: Text(
+                          userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFF57C00),
+                          ),
                         ),
                       ),
-                      Text(
-                        'Ver perfil',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          color: const Color(0xFF6B7280),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              userName,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF1A1A1A),
+                              ),
+                            ),
+                            Text(
+                              userEmail,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: const Color(0xFF757575),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(width: 4),
-                  // Icono de flecha
+                  const SizedBox(height: 8),
+                  const Divider(height: 1),
+                ],
+              ),
+            ),
+            // Opcion: Mi perfil
+            PopupMenuItem<String>(
+              value: 'profile',
+              child: Row(
+                children: [
                   const Icon(
-                    Icons.chevron_right,
-                    color: Color(0xFF9CA3AF),
-                    size: 18,
+                    Icons.person_outline_rounded,
+                    size: 20,
+                    color: Color(0xFF616161),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Mi perfil',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: const Color(0xFF424242),
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
+            // Opcion: Configuracion
+            PopupMenuItem<String>(
+              value: 'settings',
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.settings_outlined,
+                    size: 20,
+                    color: Color(0xFF616161),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Configuracion',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: const Color(0xFF424242),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const PopupMenuDivider(),
+            // Opcion: Cerrar sesion
+            PopupMenuItem<String>(
+              value: 'logout',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.logout_rounded,
+                    size: 20,
+                    color: Colors.red.shade400,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Cerrar sesion',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.red.shade400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          onSelected: (value) {
+            switch (value) {
+              case 'profile':
+                // TODO: Navegar a perfil (user_management_page.dart)
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserManagementPage(),
+                  ),
+                );
+                break;
+              case 'settings':
+                // TODO: Navegar a configuracion
+                break;
+              case 'logout':
+                ref.read(authControllerProvider.notifier).logout();
+                break;
+            }
+          },
         ),
       );
     }
-
     // Si no está autenticado, no muestra nada
     return const SizedBox.shrink();
   }
