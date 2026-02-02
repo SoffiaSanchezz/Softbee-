@@ -19,13 +19,18 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, Map<String, dynamic>>> registerUser(
-      String username,
-      String email,
-      String phone,
-      String password) async {
+    String username,
+    String email,
+    String phone,
+    String password,
+  ) async {
     try {
       final result = await remoteDataSource.registerUser(
-          username, email, phone, password);
+        username,
+        email,
+        phone,
+        password,
+      );
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -54,7 +59,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(user);
     } catch (e) {
       await localDataSource.deleteToken();
-      await localDataSource.deleteUser(); // También eliminar el usuario al expirar la sesión
+      await localDataSource
+          .deleteUser(); // También eliminar el usuario al expirar la sesión
       return const Left(AuthFailure('Session expired. Please log in again.'));
     }
   }
@@ -64,7 +70,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await remoteDataSource.logout();
       await localDataSource.deleteToken();
-      await localDataSource.deleteUser(); // También eliminar el usuario al cerrar sesión
+      await localDataSource
+          .deleteUser(); // También eliminar el usuario al cerrar sesión
       return const Right(null);
     } catch (e) {
       return const Left(ServerFailure('Error during logout'));
@@ -82,11 +89,23 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> createApiary(String userId, String apiaryName,
-      String location, int beehivesCount, bool treatments, String token) async {
+  Future<Either<Failure, void>> createApiary(
+    String userId,
+    String apiaryName,
+    String location,
+    int beehivesCount,
+    bool treatments,
+    String token,
+  ) async {
     try {
       await remoteDataSource.createApiary(
-          userId, apiaryName, location, beehivesCount, treatments, token);
+        userId,
+        apiaryName,
+        location,
+        beehivesCount,
+        treatments,
+        token,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
