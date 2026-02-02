@@ -17,7 +17,7 @@ class LoginPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (next.isAuthenticated) {
-        GoRouter.of(context).go(AppRoutes.dashboard);
+        GoRouter.of(context).go(AppRoutes.dashboardRoute);
       }
     });
 
@@ -26,7 +26,7 @@ class LoginPage extends ConsumerWidget {
 }
 
 class _LoginPageContent extends ConsumerStatefulWidget {
-  const _LoginPageContent({super.key});
+  const _LoginPageContent();
 
   @override
   ConsumerState<_LoginPageContent> createState() => _LoginPageContentState();
@@ -547,12 +547,12 @@ class _LoginPageContentState extends ConsumerState<_LoginPageContent> {
           SizedBox(height: verticalSpacing),
           SizedBox(
             height: buttonHeight,
-            child: _buildRegisterButton( // Añadir el botón de registro
+            child: _buildRegisterButton(
+              // Añadir el botón de registro
               context: context,
               fontSize: subtitleSize,
             ),
           ),
-
         ],
       ),
     );
@@ -733,7 +733,7 @@ class _LoginPageContentState extends ConsumerState<_LoginPageContent> {
   }) {
     return OutlinedButton(
       onPressed: () {
-        GoRouter.of(context).push(AppRoutes.register);
+        GoRouter.of(context).push(AppRoutes.registerRoute);
       },
       style: OutlinedButton.styleFrom(
         side: const BorderSide(color: AppColors.primaryYellow, width: 2),
@@ -777,5 +777,3 @@ class _LoginPageContentState extends ConsumerState<_LoginPageContent> {
     );
   }
 }
-
-

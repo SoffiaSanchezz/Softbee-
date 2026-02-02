@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class UserManagementPage extends ConsumerWidget {
-  const UserManagementPage({Key? key}) : super(key: key);
+  const UserManagementPage({super.key});
 
   // Colores del tema
   static const Color primaryColor = Color(0xFFFFC107);
@@ -128,7 +128,11 @@ class UserManagementPage extends ConsumerWidget {
                   radius: 60,
                   backgroundColor: Colors.grey[200],
                   // Placeholder for profile image
-                  child: const Icon(Icons.person, size: 60, color: textSecondary),
+                  child: const Icon(
+                    Icons.person,
+                    size: 60,
+                    color: textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -145,10 +149,7 @@ class UserManagementPage extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             '@${user.username}',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: textSecondary,
-            ),
+            style: GoogleFonts.poppins(fontSize: 16, color: textSecondary),
           ),
         ],
       ),
