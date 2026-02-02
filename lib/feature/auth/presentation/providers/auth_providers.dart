@@ -49,7 +49,9 @@ final checkAuthStatusUseCaseProvider = Provider<CheckAuthStatusUseCase>((ref) {
   return CheckAuthStatusUseCase(ref.read(authRepositoryProvider));
 });
 
-final getUserFromTokenUseCaseProvider = Provider<GetUserFromTokenUseCase>((ref) {
+final getUserFromTokenUseCaseProvider = Provider<GetUserFromTokenUseCase>((
+  ref,
+) {
   return GetUserFromTokenUseCase(ref.read(authRepositoryProvider));
 });
 
@@ -61,37 +63,52 @@ final createApiaryUseCaseProvider = Provider<CreateApiaryUseCase>((ref) {
   return CreateApiaryUseCase(ref.read(authRepositoryProvider));
 });
 
-
-final authControllerProvider =
-    StateNotifierProvider<AuthController, AuthState>((ref) {
-  return AuthController(
-    loginUseCase: ref.read(loginUseCaseProvider),
-    logoutUseCase: ref.read(logoutUseCaseProvider),
-    checkAuthStatusUseCase: ref.read(checkAuthStatusUseCaseProvider),
-    getUserFromTokenUseCase: ref.read(getUserFromTokenUseCaseProvider),
-    registerUseCase: ref.read(registerUseCaseProvider), // Inyectar RegisterUseCase
-  );
-});
+final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
+  (ref) {
+    return AuthController(
+      loginUseCase: ref.read(loginUseCaseProvider),
+      logoutUseCase: ref.read(logoutUseCaseProvider),
+      checkAuthStatusUseCase: ref.read(checkAuthStatusUseCaseProvider),
+      getUserFromTokenUseCase: ref.read(getUserFromTokenUseCaseProvider),
+      registerUseCase: ref.read(
+        registerUseCaseProvider,
+      ), // Inyectar RegisterUseCase
+    );
+  },
+);
 
 final loginControllerProvider =
     StateNotifierProvider.autoDispose<LoginController, LoginState>((ref) {
-  final authController = ref.watch(authControllerProvider.notifier); // Get notifier for actions
-  return LoginController(authController);
-});
+      final authController = ref.watch(
+        authControllerProvider.notifier,
+      ); // Get notifier for actions
+      return LoginController(authController);
+    });
 
-final registerControllerProvider = StateNotifierProvider.autoDispose<RegisterController, RegisterState>((ref) {
-  final authController = ref.watch(authControllerProvider.notifier);
-  final registerUseCase = ref.read(registerUseCaseProvider);
-  final createApiaryUseCase = ref.read(createApiaryUseCaseProvider);
-  return RegisterController(authController, registerUseCase, createApiaryUseCase);
-});
+final registerControllerProvider =
+    StateNotifierProvider.autoDispose<RegisterController, RegisterState>((ref) {
+      final authController = ref.watch(authControllerProvider.notifier);
+      final registerUseCase = ref.read(registerUseCaseProvider);
+      final createApiaryUseCase = ref.read(createApiaryUseCaseProvider);
+      return RegisterController(
+        authController,
+        registerUseCase,
+        createApiaryUseCase,
+      );
+    });
 
-final forgotPasswordControllerProvider = StateNotifierProvider.autoDispose<
-    ForgotPasswordController, ForgotPasswordState>((ref) {
-  return ForgotPasswordController();
-});
+final forgotPasswordControllerProvider =
+    StateNotifierProvider.autoDispose<
+      ForgotPasswordController,
+      ForgotPasswordState
+    >((ref) {
+      return ForgotPasswordController();
+    });
 
-final resetPasswordControllerProvider = StateNotifierProvider.autoDispose<
-    ResetPasswordController, ResetPasswordState>((ref) {
-  return ResetPasswordController();
-});
+final resetPasswordControllerProvider =
+    StateNotifierProvider.autoDispose<
+      ResetPasswordController,
+      ResetPasswordState
+    >((ref) {
+      return ResetPasswordController();
+    });

@@ -35,7 +35,8 @@ class LoginState {
       password: password ?? this.password,
       isLoading: isLoading ?? this.isLoading,
       isPasswordVisible: isPasswordVisible ?? this.isPasswordVisible,
-      errorMessage: errorMessage, // Nullify if not provided to clear previous errors
+      errorMessage:
+          errorMessage, // Nullify if not provided to clear previous errors
       showValidationErrors: showValidationErrors ?? this.showValidationErrors,
     );
   }
