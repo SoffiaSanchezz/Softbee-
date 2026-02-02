@@ -1,8 +1,20 @@
 abstract class AppRoutes {
-  static const String landing = '/';
-  static const String login = '/login';
-  static const String register = '/register';
-  static const String dashboard = '/dashboard';
-  static const String profile = '/profile'; // Nueva ruta
-  static const String resetPassword = '/reset-password/:token';
+  static const String landingRoute = '/';
+  static const String loginRoute = '/login';
+  static const String registerRoute = '/register';
+  static const String dashboardRoute =
+      '/dashboard'; // This is the main dashboard, not apiary specific
+  static const String userProfileRoute = '/profile';
+  static const String resetPasswordRoute = '/reset-password/:token';
+
+  // Apiary-specific routes
+  static const String apiaryDashboardRoute = '/apiary-dashboard/:apiaryId';
+  static const String monitoringRoute =
+      '/apiary-dashboard/:apiaryId/monitoring';
+  static const String inventoryRoute = '/apiary-dashboard/:apiaryId/inventory';
+  static const String reportsRoute = '/apiary-dashboard/:apiaryId/reports';
+  static const String historyRoute = '/apiary-dashboard/:apiaryId/history';
+  static const String hivesRoute = '/apiary-dashboard/:apiaryId/hives';
+  static const String apiarySettingsRoute =
+      '/apiary-dashboard/:apiaryId/settings';
 }
