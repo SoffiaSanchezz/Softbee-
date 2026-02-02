@@ -117,7 +117,7 @@ class _LandingPageState extends State<LandingPage>
         ],
         TextButton(
           onPressed: () {
-            GoRouter.of(context).go(AppRoutes.login); // Usar GoRouter
+            GoRouter.of(context).go(AppRoutes.loginRoute); // Usar GoRouter
           },
           style: TextButton.styleFrom(foregroundColor: const Color(0xFF6B7280)),
           child: const Text('Iniciar Sesión'),
