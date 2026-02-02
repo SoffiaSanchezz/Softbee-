@@ -60,8 +60,9 @@ class RegisterController extends StateNotifier<RegisterState> {
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'El correo es requerido';
-    } else if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-        .hasMatch(value)) {
+    } else if (!RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(value)) {
       return 'Ingresa un correo válido (ej: usuario@dominio.com)';
     }
     return null;
@@ -95,7 +96,7 @@ class RegisterController extends StateNotifier<RegisterState> {
     if (!RegExp(r'[0-9]').hasMatch(value)) {
       return 'Debe contener al menos un número (0-9)';
     }
-    if (!RegExp(r'[^a-zA-Z0-9\s]').hasMatch(value)) { 
+    if (!RegExp(r'[^a-zA-Z0-9\s]').hasMatch(value)) {
       return 'Debe contener al menos un carácter especial';
     }
     return null;
@@ -115,7 +116,8 @@ class RegisterController extends StateNotifier<RegisterState> {
   bool hasUppercase(String password) => RegExp(r'[A-Z]').hasMatch(password);
   bool hasLowercase(String password) => RegExp(r'[a-z]').hasMatch(password);
   bool hasDigit(String password) => RegExp(r'[0-9]').hasMatch(password);
-  bool hasSpecialChar(String password) => RegExp(r'[^a-zA-Z0-9\s]').hasMatch(password);
+  bool hasSpecialChar(String password) =>
+      RegExp(r'[^a-zA-Z0-9\s]').hasMatch(password);
 
   bool _isStep1Valid() {
     return validateName(state.name) == null &&
@@ -142,7 +144,10 @@ class RegisterController extends StateNotifier<RegisterState> {
     if (state.currentStep == 0) {
       state = state.copyWith(showValidationErrors: true);
       if (_isStep1Valid()) {
-        state = state.copyWith(currentStep: state.currentStep + 1, showValidationErrors: false);
+        state = state.copyWith(
+          currentStep: state.currentStep + 1,
+          showValidationErrors: false,
+        );
       }
     }
   }
@@ -159,7 +164,9 @@ class RegisterController extends StateNotifier<RegisterState> {
 
   // Métodos para gestionar apiarios
   void addApiary() {
-    state = state.copyWith(apiaries: [...state.apiaries, const RegisterApiaryData()]);
+    state = state.copyWith(
+      apiaries: [...state.apiaries, const RegisterApiaryData()],
+    );
   }
 
   void removeApiary(int index) {
@@ -194,22 +201,31 @@ class RegisterController extends StateNotifier<RegisterState> {
 
   Future<void> submitRegistration() async {
     print('DEBUG: submitRegistration - Inicio');
-    state = state.copyWith(isLoading: true, clearErrorMessage: true, showValidationErrors: true);
+    state = state.copyWith(
+      isLoading: true,
+      clearErrorMessage: true,
+      showValidationErrors: true,
+    );
 
     if (!_isStep1Valid()) {
       print('DEBUG: submitRegistration - Paso 1 de validación fallido.');
       state = state.copyWith(
-          isLoading: false, errorMessage: 'Por favor, completa los campos de información personal correctamente.');
+        isLoading: false,
+        errorMessage:
+            'Por favor, completa los campos de información personal correctamente.',
+      );
       return;
     }
     if (!_isStep2Valid()) {
       print('DEBUG: submitRegistration - Paso 2 de validación fallido.');
       state = state.copyWith(
-          isLoading: false, errorMessage: 'Por favor, completa los campos de información de apiarios correctamente.');
+        isLoading: false,
+        errorMessage:
+            'Por favor, completa los campos de información de apiarios correctamente.',
+      );
       return;
     }
     print('DEBUG: submitRegistration - Validaciones de pasos 1 y 2 OK.');
-
 
     // 1. Registrar usuario
     final username = AuthRemoteDataSourceImpl.generateUsername(state.email);
@@ -220,7 +236,9 @@ class RegisterController extends StateNotifier<RegisterState> {
       phone: _cleanPhone(state.phone),
       password: state.password,
     );
-    print('DEBUG: submitRegistration - Preparando registro de usuario para email: ${registerParams.email}');
+    print(
+      'DEBUG: submitRegistration - Preparando registro de usuario para email: ${registerParams.email}',
+    );
 
     try {
       final registerResult = await _authController.register(
@@ -233,15 +251,21 @@ class RegisterController extends StateNotifier<RegisterState> {
 
       final token = registerResult['token'] as String;
       final user = registerResult['user'] as User;
-      final userId = user.id as String;
+      final userId = user.id;
 
-      print('DEBUG: submitRegistration - Usuario registrado exitosamente. userId: $userId, token: ${token.substring(0, 10)}...');
+      print(
+        'DEBUG: submitRegistration - Usuario registrado exitosamente. userId: $userId, token: ${token.substring(0, 10)}...',
+      );
 
       // 2. Crear apiarios
       bool allApiariesCreated = true;
-      print('DEBUG: submitRegistration - Intentando crear ${state.apiaries.length} apiarios.');
+      print(
+        'DEBUG: submitRegistration - Intentando crear ${state.apiaries.length} apiarios.',
+      );
       for (final apiaryData in state.apiaries) {
-        print('DEBUG: submitRegistration - Procesando apiario: ${apiaryData.name}');
+        print(
+          'DEBUG: submitRegistration - Procesando apiario: ${apiaryData.name}',
+        );
         final createApiaryParams = CreateApiaryParams(
           userId: userId,
           apiaryName: apiaryData.name,
@@ -255,16 +279,22 @@ class RegisterController extends StateNotifier<RegisterState> {
         apiaryResult.fold(
           (failure) {
             allApiariesCreated = false;
-            print('ERROR: submitRegistration - Fallo al crear apiario ${apiaryData.name}: ${failure.message}');
+            print(
+              'ERROR: submitRegistration - Fallo al crear apiario ${apiaryData.name}: ${failure.message}',
+            );
             // Podríamos acumular errores aquí si queremos mostrarlos todos
             // state = state.copyWith(errorMessage: (state.errorMessage ?? '') + 'Error: ${apiaryData.name} - ${failure.message}\n');
           },
           (_) {
-            print('DEBUG: submitRegistration - Apiario ${apiaryData.name} creado exitosamente.');
+            print(
+              'DEBUG: submitRegistration - Apiario ${apiaryData.name} creado exitosamente.',
+            );
           },
         );
         if (!allApiariesCreated) {
-          print('DEBUG: submitRegistration - Interrumpiendo creación de apiarios debido a un fallo.');
+          print(
+            'DEBUG: submitRegistration - Interrumpiendo creación de apiarios debido a un fallo.',
+          );
           break; // Si falla uno, no seguir con el resto
         }
       }
@@ -275,16 +305,21 @@ class RegisterController extends StateNotifier<RegisterState> {
           isRegistered: true,
           errorMessage: null,
         );
-        print('DEBUG: submitRegistration - Todos los apiarios se crearon correctamente.');
+        print(
+          'DEBUG: submitRegistration - Todos los apiarios se crearon correctamente.',
+        );
         // Iniciar sesión automáticamente después del registro exitoso
         // Esto ya lo hace AuthController, solo necesitamos un trigger para la UI
       } else {
         state = state.copyWith(
           isLoading: false,
-          errorMessage: 'Usuario registrado, pero hubo problemas al crear uno o más apiarios.',
+          errorMessage:
+              'Usuario registrado, pero hubo problemas al crear uno o más apiarios.',
           isRegistered: false,
         );
-        print('ERROR: submitRegistration - Usuario registrado, pero problemas al crear apiarios.');
+        print(
+          'ERROR: submitRegistration - Usuario registrado, pero problemas al crear apiarios.',
+        );
       }
     } catch (e) {
       print('ERROR: submitRegistration - Excepción general: $e');
