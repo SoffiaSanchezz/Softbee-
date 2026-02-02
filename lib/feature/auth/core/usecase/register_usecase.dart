@@ -2,10 +2,10 @@ import 'package:either_dart/either.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecase/usecase.dart';
 import '../repositories/auth_repository.dart';
-import '../../core/entities/user.dart';
 
 class RegisterParams {
-  final String name; // Campo que se usa solo en la UI para display o generación de username
+  final String
+  name; // Campo que se usa solo en la UI para display o generación de username
   final String username;
   final String email;
   final String phone;
@@ -26,7 +26,9 @@ class RegisterUseCase implements UseCase<Map<String, dynamic>, RegisterParams> {
   RegisterUseCase(this.repository);
 
   @override
-  Future<Either<Failure, Map<String, dynamic>>> call(RegisterParams params) async {
+  Future<Either<Failure, Map<String, dynamic>>> call(
+    RegisterParams params,
+  ) async {
     return await repository.registerUser(
       params.username,
       params.email,
