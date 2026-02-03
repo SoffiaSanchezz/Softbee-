@@ -1,3 +1,4 @@
+import 'package:Softbee/core/widgets/menu_info_apiario.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -9,7 +10,7 @@ import '../pages/not_found_page.dart';
 import '../pages/landing_page.dart';
 import '../../feature/auth/presentation/pages/user_management_page.dart';
 
-import '../../feature/apiaries/presentation/widgets/apiary_dashboard_menu.dart';
+// import '../../feature/apiaries/presentation/widgets/apiary_dashboard_menu.dart';
 import '../../feature/apiaries/presentation/pages/monitoring_page.dart';
 import '../../feature/apiaries/presentation/pages/inventory_page.dart';
 import '../../feature/apiaries/presentation/pages/reports_page.dart';

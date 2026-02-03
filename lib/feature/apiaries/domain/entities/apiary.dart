@@ -5,6 +5,7 @@ class Apiary {
   final String? location;
   final int beehivesCount;
   final bool treatments;
+  final DateTime? createdAt;
 
   Apiary({
     required this.id,
@@ -13,6 +14,7 @@ class Apiary {
     this.location,
     required this.beehivesCount,
     required this.treatments,
+    this.createdAt,
   });
 
   factory Apiary.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,9 @@ class Apiary {
       location: json['location'],
       beehivesCount: json['beehives_count'] ?? 0,
       treatments: json['treatments'] ?? false,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
     );
   }
 }
