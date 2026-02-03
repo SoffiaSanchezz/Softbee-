@@ -34,7 +34,9 @@ class ResetPasswordState extends Equatable {
       passwordChanged: passwordChanged ?? this.passwordChanged,
       showPassword: showPassword ?? this.showPassword,
       showConfirmPassword: showConfirmPassword ?? this.showConfirmPassword,
-      errorMessage: clearErrorMessage ? null : errorMessage ?? this.errorMessage,
+      errorMessage: clearErrorMessage
+          ? null
+          : errorMessage ?? this.errorMessage,
       password: password ?? this.password,
       confirmPassword: confirmPassword ?? this.confirmPassword,
     );
@@ -42,12 +44,12 @@ class ResetPasswordState extends Equatable {
 
   @override
   List<Object?> get props => [
-        isLoading,
-        passwordChanged,
-        showPassword,
-        showConfirmPassword,
-        errorMessage,
-        password,
-        confirmPassword,
-      ];
+    isLoading,
+    passwordChanged,
+    showPassword,
+    showConfirmPassword,
+    errorMessage,
+    password,
+    confirmPassword,
+  ];
 }

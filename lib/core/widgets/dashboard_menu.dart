@@ -1,17 +1,107 @@
+import 'package:Softbee/feature/apiaries/presentation/widgets/apiaries_menu.dart';
+import 'package:Softbee/feature/auth/presentation/widgets/user_profile_header.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class MenuScreen extends StatelessWidget {
+class MenuScreen extends ConsumerWidget {
   const MenuScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+    final isMobile = screenWidth < 600;
+
     return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        shadowColor: Colors.black.withOpacity(0.1),
         automaticallyImplyLeading: false,
+        titleSpacing: isSmallScreen ? 12 : 16,
+        title: Row(
+          children: [
+            // Logo de Softbee
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFC107).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Image.asset(
+                'assets/images/softbee_logo.png', // Reemplaza con tu asset
+                width: isSmallScreen ? 28 : 32,
+                height: isSmallScreen ? 28 : 32,
+                // Si no tienes el asset, usa un icono:
+                errorBuilder: (context, error, stackTrace) => Icon(
+                  Icons.hive_rounded,
+                  color: const Color(0xFFF57C00),
+                  size: isSmallScreen ? 24 : 28,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Titulo
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Mis apiarios',
+                    style: GoogleFonts.poppins(
+                      fontSize: isSmallScreen ? 16 : 18,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  if (!isMobile)
+                    Text(
+                      'Gestiona tus colmenas',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: const Color(0xFF9E9E9E),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          // Widget de perfil de usuario
+          const UserProfileHeader(),
+          SizedBox(width: isSmallScreen ? 4 : 8),
+          // Boton de configuracion
+          SizedBox(width: isSmallScreen ? 8 : 12),
+        ],
       ),
-      body: const Center(
-        child: Text('Welcome to Softbee!'),
+      body: const ApiariesMenu(),
+      // FAB para crear nuevo apiario (responsive)
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // TODO: Navegar a crear apiario
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Crear nuevo apiario'),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        },
+        backgroundColor: const Color(0xFFFFC107),
+        foregroundColor: const Color(0xFF1A1A1A),
+        elevation: 4,
+        icon: const Icon(Icons.add_rounded),
+        label: Text(
+          isMobile ? 'Nuevo' : 'Nuevo apiario',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }

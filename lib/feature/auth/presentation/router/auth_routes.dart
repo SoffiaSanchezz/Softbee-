@@ -6,12 +6,9 @@ import '../pages/register_page.dart'; // Importar RegisterPage
 import '../../../../core/router/app_routes.dart';
 
 final authRoutes = <GoRoute>[
+  GoRoute(path: AppRoutes.loginRoute, builder: (_, __) => const LoginPage()),
   GoRoute(
-    path: AppRoutes.login,
-    builder: (_, __) => const LoginPage(),
-  ),
-  GoRoute(
-    path: AppRoutes.register, // Nueva ruta para el registro
+    path: AppRoutes.registerRoute, // Nueva ruta para el registro
     builder: (_, __) => const RegisterPage(),
   ),
   GoRoute(
@@ -19,7 +16,7 @@ final authRoutes = <GoRoute>[
     builder: (_, __) => const ForgotPasswordPage(),
   ),
   GoRoute(
-    path: AppRoutes.resetPassword,
+    path: AppRoutes.resetPasswordRoute,
     builder: (context, state) {
       final token = state.pathParameters['token'] ?? '';
       return ResetPasswordPage(token: token);

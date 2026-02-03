@@ -24,7 +24,7 @@ class GeocodingService {
 
     try {
       final uri = Uri.parse(_baseUrl).replace(queryParameters: params);
-      
+
       // Nominatim usage policy requires a custom User-Agent.
       final headers = {
         'User-Agent': 'Softbee Flutter App (for academic project)',

@@ -36,7 +36,9 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<void> saveUser(User user) async {
     final prefs = await SharedPreferences.getInstance();
-    final userJson = json.encode(user.toJson()); // Necesitaremos un toJson en User
+    final userJson = json.encode(
+      user.toJson(),
+    ); // Necesitaremos un toJson en User
     await prefs.setString(_authUserKey, userJson);
   }
 

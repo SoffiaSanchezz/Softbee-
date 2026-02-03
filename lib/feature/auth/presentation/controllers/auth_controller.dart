@@ -82,7 +82,11 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(
+      isLoading: true,
+      isAuthenticating: true,
+      error: null,
+    );
 
     final loginResult = await loginUseCase(LoginParams(email, password));
 
@@ -90,6 +94,7 @@ class AuthController extends StateNotifier<AuthState> {
       (failure) async {
         state = state.copyWith(
           isLoading: false,
+          isAuthenticating: false,
           error: _mapFailureToMessage(failure),
         );
       },
@@ -99,12 +104,18 @@ class AuthController extends StateNotifier<AuthState> {
           (failure) {
             state = state.copyWith(
               isLoading: false,
+              isAuthenticating: false,
               user: null,
               error: _mapFailureToMessage(failure),
             );
           },
           (user) {
-            state = state.copyWith(isLoading: false, user: user, token: token);
+            state = state.copyWith(
+              isLoading: false,
+              isAuthenticating: false,
+              user: user,
+              token: token,
+            );
           },
         );
       },
@@ -141,8 +152,10 @@ class AuthController extends StateNotifier<AuthState> {
         throw Exception(_mapFailureToMessage(failure));
       },
       (data) {
-        final token = data['access_token'] as String; // Usar 'access_token' para consistencia
-        final user = User.fromJson(data['user']); // Asume que 'user' es un Map
+        final token =
+            data['access_token']
+                as String; // Usar 'access_token' para consistencia
+        final user = data['user'] as User;
         state = state.copyWith(
           isLoading: false,
           isRegistered: true,
@@ -166,7 +179,9 @@ class AuthController extends StateNotifier<AuthState> {
         );
       },
       (_) {
-        state = const AuthState(isAuthenticating: false); // Reset state completely
+        state = const AuthState(
+          isAuthenticating: false,
+        ); // Reset state completely
       },
     );
   }
@@ -192,4 +207,3 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(isRegistered: false);
   }
 }
-
