@@ -5,8 +5,16 @@ import 'package:google_fonts/google_fonts.dart';
 class ApiaryCard extends StatelessWidget {
   final Apiary apiary;
   final VoidCallback onTap;
+  final Function(Apiary) onEdit;
+  final Function(Apiary) onDelete;
 
-  const ApiaryCard({super.key, required this.apiary, required this.onTap});
+  const ApiaryCard({
+    super.key,
+    required this.apiary,
+    required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,36 +31,85 @@ class ApiaryCard extends StatelessWidget {
         horizontal: isSmallScreen ? 12.0 : 16.0,
       ),
       elevation: isSmallScreen ? 2 : 4,
-      shadowColor: const Color(0xFFFFC107).withOpacity(0.3),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
-        splashColor: const Color(0xFFFFC107).withOpacity(0.2),
-        highlightColor: const Color(0xFFFFC107).withOpacity(0.1),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, const Color(0xFFFFF8E1).withOpacity(0.5)],
+      shadowColor: const Color(0xFFFFC107).withAlpha(76),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
+              splashColor: const Color(0xFFFFC107).withAlpha(51),
+              highlightColor: const Color(0xFFFFC107).withAlpha(26),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white,
+                      const Color(0xFFFFF8E1).withAlpha(128)
+                    ],
+                  ),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
+                  child: isSmallScreen
+                      ? _buildVerticalLayout(context, isSmallScreen)
+                      : _buildHorizontalLayout(
+                          context,
+                          isMediumScreen,
+                          isLargeScreen,
+                        ),
+                ),
+              ),
             ),
           ),
-          child: Padding(
-            padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
-            child: isSmallScreen
-                ? _buildVerticalLayout(context, isSmallScreen)
-                : _buildHorizontalLayout(
-                    context,
-                    isMediumScreen,
-                    isLargeScreen,
-                  ),
+          // Posiciona el botón de menú en la esquina superior derecha
+          Positioned(
+            top: 4,
+            right: 4,
+            child: _buildPopupMenu(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPopupMenu() {
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        if (value == 'edit') {
+          onEdit(apiary);
+        } else if (value == 'delete') {
+          onDelete(apiary);
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit_outlined, color: Colors.blue),
+              SizedBox(width: 10),
+              Text('Editar'),
+            ],
           ),
         ),
-      ),
+        const PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, color: Colors.red),
+              SizedBox(width: 10),
+              Text('Eliminar', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+      icon: Icon(Icons.more_vert, color: Colors.grey.shade700),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 
@@ -60,79 +117,85 @@ class ApiaryCard extends StatelessWidget {
   Widget _buildVerticalLayout(BuildContext context, bool isSmallScreen) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Icono centrado
-        _buildIconContainer(size: 56, iconSize: 32),
-        const SizedBox(height: 12),
-
-        // Información del apiario
-        Text(
-          apiary.name,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF212121),
-          ),
-        ),
-        const SizedBox(height: 4),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Column(
           children: [
-            Icon(
-              Icons.location_on_outlined,
-              size: 14,
-              color: const Color(0xFF9E9E9E),
-            ),
-            const SizedBox(width: 4),
-            Flexible(
+            const SizedBox(height: 32), // Space for menu button
+            _buildIconContainer(size: 56, iconSize: 32),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: Text(
-                apiary.location ?? 'Ubicación no especificada',
+                apiary.name,
                 textAlign: TextAlign.center,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: const Color(0xFF757575),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF212121),
                 ),
               ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 14,
+                  color: Color(0xFF9E9E9E),
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    apiary.location ?? 'Ubicación no especificada',
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: const Color(0xFF757575),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        const SizedBox(height: 12),
-
-        // Stats row
-        _buildStatsRow(isCompact: true),
-        const SizedBox(height: 12),
-
-        // Botón de ver detalles
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFC107).withOpacity(0.15),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Ver detalles',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFFF57C00),
-                ),
+        Column(
+          children: [
+            _buildStatsRow(isCompact: true),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFC107).withAlpha(38),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.arrow_forward_rounded,
-                size: 16,
-                color: Color(0xFFF57C00),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Ver detalles',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFFF57C00),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 16,
+                    color: Color(0xFFF57C00),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
@@ -159,12 +222,16 @@ class ApiaryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                apiary.name,
-                style: GoogleFonts.poppins(
-                  fontSize: isLargeScreen ? 20 : 17,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF212121),
+              // Se movió el nombre a un Padding para dejar espacio al botón
+              Padding(
+                padding: const EdgeInsets.only(right: 30.0),
+                child: Text(
+                  apiary.name,
+                  style: GoogleFonts.poppins(
+                    fontSize: isLargeScreen ? 20 : 17,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF212121),
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
@@ -205,11 +272,11 @@ class ApiaryCard extends StatelessWidget {
 
         const SizedBox(width: 8),
 
-        // Flecha indicadora
+        // Flecha indicadora (ahora dentro del InkWell)
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFC107).withOpacity(0.15),
+            color: const Color(0xFFFFC107).withAlpha(38),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(
@@ -222,7 +289,6 @@ class ApiaryCard extends StatelessWidget {
     );
   }
 
-  /// Container del icono con estilo mejorado
   Widget _buildIconContainer({required double size, required double iconSize}) {
     return Container(
       width: size,
@@ -232,13 +298,13 @@ class ApiaryCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFFFFC107).withOpacity(0.25),
-            const Color(0xFFFFB300).withOpacity(0.15),
+            const Color(0xFFFFC107).withAlpha(64),
+            const Color(0xFFFFB300).withAlpha(38)
           ],
         ),
         borderRadius: BorderRadius.circular(size * 0.22),
         border: Border.all(
-          color: const Color(0xFFFFC107).withOpacity(0.3),
+          color: const Color(0xFFFFC107).withAlpha(76),
           width: 1.5,
         ),
       ),
@@ -250,16 +316,14 @@ class ApiaryCard extends StatelessWidget {
     );
   }
 
-  /// Fila de estadísticas
   Widget _buildStatsRow({required bool isCompact}) {
     return Row(
-      mainAxisAlignment: isCompact
-          ? MainAxisAlignment.spaceEvenly
-          : MainAxisAlignment.start,
+      mainAxisAlignment:
+          isCompact ? MainAxisAlignment.spaceEvenly : MainAxisAlignment.start,
       children: [
         _buildStatItem(
           icon: Icons.grid_view_rounded,
-          value: '${apiary.beehivesCount ?? 0}',
+          value: '${apiary.beehivesCount}',
           label: 'Colmenas',
           isCompact: isCompact,
         ),
@@ -274,7 +338,6 @@ class ApiaryCard extends StatelessWidget {
     );
   }
 
-  /// Estadísticas compactas para pantallas medianas
   Widget _buildCompactStats() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -292,7 +355,7 @@ class ApiaryCard extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            '${apiary.beehivesCount ?? 0}',
+            '${apiary.beehivesCount}',
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -304,7 +367,6 @@ class ApiaryCard extends StatelessWidget {
     );
   }
 
-  /// Item individual de estadística
   Widget _buildStatItem({
     required IconData icon,
     required String value,
@@ -336,7 +398,6 @@ class ApiaryCard extends StatelessWidget {
     );
   }
 
-  /// Formatea la fecha de creación
   String _formatDate(DateTime? date) {
     if (date == null) return 'N/A';
     final months = [

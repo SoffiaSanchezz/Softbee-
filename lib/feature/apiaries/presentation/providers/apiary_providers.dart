@@ -3,6 +3,9 @@ import 'package:Softbee/feature/apiaries/data/datasources/apiary_remote_datasour
 import 'package:Softbee/feature/apiaries/data/repositories/apiary_repository_impl.dart';
 import 'package:Softbee/feature/apiaries/domain/repositories/apiary_repository.dart';
 import 'package:Softbee/feature/apiaries/domain/usecases/get_apiaries.dart';
+import 'package:Softbee/feature/apiaries/domain/usecases/create_apiary_usecase.dart';
+import 'package:Softbee/feature/apiaries/domain/usecases/update_apiary_usecase.dart';
+import 'package:Softbee/feature/apiaries/domain/usecases/delete_apiary_usecase.dart';
 import 'package:Softbee/feature/apiaries/presentation/controllers/apiaries_controller.dart';
 import 'package:Softbee/feature/auth/presentation/providers/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,12 +31,31 @@ final getApiariesUseCaseProvider = Provider<GetApiariesUseCase>((ref) {
   return GetApiariesUseCase(ref.read(apiaryRepositoryProvider));
 });
 
+final createApiaryUseCaseProvider = Provider<CreateApiaryUseCase>((ref) {
+  return CreateApiaryUseCase(ref.read(apiaryRepositoryProvider));
+});
+
+final updateApiaryUseCaseProvider = Provider<UpdateApiaryUseCase>((ref) {
+  return UpdateApiaryUseCase(ref.read(apiaryRepositoryProvider));
+});
+
+final deleteApiaryUseCaseProvider = Provider<DeleteApiaryUseCase>((ref) {
+  return DeleteApiaryUseCase(ref.read(apiaryRepositoryProvider));
+});
+
 final apiariesControllerProvider =
     StateNotifierProvider<ApiariesController, ApiariesState>((ref) {
       final getApiariesUseCase = ref.read(getApiariesUseCaseProvider);
+      final createApiaryUseCase = ref.read(createApiaryUseCaseProvider);
+      final updateApiaryUseCase = ref.read(updateApiaryUseCaseProvider);
+      final deleteApiaryUseCase = ref.read(deleteApiaryUseCaseProvider);
       final authController = ref.watch(authControllerProvider.notifier);
       return ApiariesController(
         getApiariesUseCase: getApiariesUseCase,
+        createApiaryUseCase: createApiaryUseCase,
+        updateApiaryUseCase: updateApiaryUseCase,
+        deleteApiaryUseCase: deleteApiaryUseCase,
         authController: authController,
       );
     });
+

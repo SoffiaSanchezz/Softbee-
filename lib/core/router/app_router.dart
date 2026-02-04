@@ -62,6 +62,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       // Rutas específicas del apiario
       GoRoute(
+        name: AppRoutes.apiaryDashboardRoute,
         path: AppRoutes.apiaryDashboardRoute,
         builder: (context, state) {
           final apiaryId = state.pathParameters['apiaryId']!;

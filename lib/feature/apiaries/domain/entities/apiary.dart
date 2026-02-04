@@ -30,4 +30,37 @@ class Apiary {
           : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': userId,
+      'name': name,
+      'location': location,
+      'beehives_count': beehivesCount,
+      'treatments': treatments,
+      'created_at': createdAt?.toIso8601String(),
+    };
+  }
+
+  Apiary copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? location,
+    int? beehivesCount,
+    bool? treatments,
+    DateTime? createdAt,
+  }) {
+    return Apiary(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      location: location ?? this.location,
+      beehivesCount: beehivesCount ?? this.beehivesCount,
+      treatments: treatments ?? this.treatments,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
+

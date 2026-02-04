@@ -168,7 +168,7 @@ class _LandingPageState extends State<LandingPage>
               colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
             ),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFFBBF24).withOpacity(0.3)),
+            border: Border.all(color: const Color(0xFFFBBF24).withAlpha((255 * 0.3).round())),
           ),
           child: Text(
             badge,

@@ -1,3 +1,4 @@
+import 'package:Softbee/feature/auth/core/usecase/create_apiary_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecase/usecase.dart';
@@ -52,15 +53,16 @@ class AuthController extends StateNotifier<AuthState> {
   final CheckAuthStatusUseCase checkAuthStatusUseCase;
   final GetUserFromTokenUseCase getUserFromTokenUseCase;
   final RegisterUseCase registerUseCase; // Add RegisterUseCase
-  // final CreateApiaryUseCase createApiaryUseCase; // Se inyectará en RegisterController
+  final CreateApiaryUseCase createApiaryUseCase; // Se inyectará en RegisterController
+
 
   AuthController({
     required this.loginUseCase,
     required this.logoutUseCase,
     required this.checkAuthStatusUseCase,
     required this.getUserFromTokenUseCase,
-    required this.registerUseCase, // Initialize RegisterUseCase
-    // required this.createApiaryUseCase,
+    required this.registerUseCase,
+    required this.createApiaryUseCase,
   }) : super(const AuthState());
 
   Future<void> checkAuthStatus() async {

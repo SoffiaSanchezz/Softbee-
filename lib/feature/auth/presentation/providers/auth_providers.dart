@@ -73,6 +73,7 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
       registerUseCase: ref.read(
         registerUseCaseProvider,
       ), // Inyectar RegisterUseCase
+      createApiaryUseCase: ref.read(createApiaryUseCaseProvider),
     );
   },
 );

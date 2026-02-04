@@ -1,4 +1,6 @@
 import 'package:Softbee/core/widgets/honeycomb_loader.dart';
+import 'package:Softbee/feature/apiaries/domain/entities/apiary.dart';
+import 'package:Softbee/feature/apiaries/presentation/controllers/apiaries_controller.dart';
 import 'package:Softbee/feature/apiaries/presentation/providers/apiary_providers.dart';
 import 'package:Softbee/feature/apiaries/presentation/widgets/apiary_card.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:Softbee/core/router/app_routes.dart';
+import 'package:Softbee/feature/apiaries/presentation/widgets/apiary_form_dialog.dart'; // Import the new dialog
 
 class ApiariesMenu extends ConsumerStatefulWidget {
   const ApiariesMenu({super.key});
@@ -25,6 +28,33 @@ class _ApiariesMenuState extends ConsumerState<ApiariesMenu> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for state changes to show SnackBar messages
+    ref.listen<ApiariesState>(apiariesControllerProvider, (previous, next) {
+      if (next.successMessage != null && next.successMessage != previous?.successMessage) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.successMessage!),
+            backgroundColor: Colors.green,
+          ),
+        );
+        ref.read(apiariesControllerProvider.notifier).clearMessages();
+      }
+      if ((next.errorCreating != null && next.errorCreating != previous?.errorCreating) ||
+          (next.errorUpdating != null && next.errorUpdating != previous?.errorUpdating) ||
+          (next.errorDeleting != null && next.errorDeleting != previous?.errorDeleting) ||
+          (next.errorMessage != null && next.errorMessage != previous?.errorMessage)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              next.errorCreating ?? next.errorUpdating ?? next.errorDeleting ?? next.errorMessage!,
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        ref.read(apiariesControllerProvider.notifier).clearMessages();
+      }
+    });
+
     final apiariesState = ref.watch(apiariesControllerProvider);
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -93,6 +123,8 @@ class _ApiariesMenuState extends ConsumerState<ApiariesMenu> {
                   return ApiaryCard(
                     apiary: apiary,
                     onTap: () => _navigateToApiary(context, apiary),
+                    onEdit: (apiary) => _showApiaryFormDialog(context, apiary: apiary),
+                    onDelete: (apiary) => _confirmDeleteApiary(context, apiary),
                   );
                 }, childCount: apiariesState.apiaries.length),
               ),
@@ -104,12 +136,48 @@ class _ApiariesMenuState extends ConsumerState<ApiariesMenu> {
                 return ApiaryCard(
                   apiary: apiary,
                   onTap: () => _navigateToApiary(context, apiary),
+                  onEdit: (apiary) => _showApiaryFormDialog(context, apiary: apiary),
+                  onDelete: (apiary) => _confirmDeleteApiary(context, apiary),
                 );
               }, childCount: apiariesState.apiaries.length),
             ),
 
           // Espaciado inferior
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
+        ],
+      ),
+    );
+  }
+
+  void _showApiaryFormDialog(BuildContext context, {Apiary? apiary}) {
+    showDialog(
+      context: context,
+      builder: (context) => ApiaryFormDialog(apiaryToEdit: apiary),
+    ).then((_) {
+      // Refresh apiaries after dialog is closed
+      ref.read(apiariesControllerProvider.notifier).fetchApiaries();
+    });
+  }
+
+  void _confirmDeleteApiary(BuildContext context, Apiary apiary) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Eliminar Apiario "${apiary.name}"'),
+        content: const Text('¿Estás seguro de que quieres eliminar este apiario? Esta acción es irreversible.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await ref.read(apiariesControllerProvider.notifier).deleteApiary(apiary.id);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );
@@ -161,7 +229,7 @@ class _ApiariesMenuState extends ConsumerState<ApiariesMenu> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFC107).withOpacity(0.3),
+                  color: const Color(0xFFFFC107).withAlpha((255 * 0.3).round()),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -192,13 +260,14 @@ class _ApiariesMenuState extends ConsumerState<ApiariesMenu> {
     );
   }
 
-  void _navigateToApiary(BuildContext context, dynamic apiary) {
+  void _navigateToApiary(BuildContext context, Apiary apiary) {
+    print('Navigating to apiary: ${apiary.id}, name: ${apiary.name}, location: ${apiary.location}');
     context.pushNamed(
       AppRoutes.apiaryDashboardRoute,
       pathParameters: {'apiaryId': apiary.id},
       queryParameters: {
         'apiaryName': apiary.name,
-        'apiaryLocation': apiary.location,
+        if (apiary.location != null) 'apiaryLocation': apiary.location!,
       },
     );
   }
@@ -310,7 +379,7 @@ class _ApiariesMenuState extends ConsumerState<ApiariesMenu> {
                     color: const Color(0xFFFFF8E1),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFFFFC107).withOpacity(0.3),
+                      color: const Color(0xFFFFC107).withAlpha((255 * 0.3).round()),
                       width: 2,
                     ),
                   ),
@@ -347,21 +416,7 @@ class _ApiariesMenuState extends ConsumerState<ApiariesMenu> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Funcionalidad para crear apiario no implementada aún.',
-                          style: GoogleFonts.poppins(),
-                        ),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: const Color(0xFF424242),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: () => _showApiaryFormDialog(context),
                   icon: const Icon(Icons.add_rounded, size: 22),
                   label: Text(
                     'Crear nuevo apiario',

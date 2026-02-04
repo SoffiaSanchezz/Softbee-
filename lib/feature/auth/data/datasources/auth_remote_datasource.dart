@@ -20,6 +20,7 @@ abstract class AuthRemoteDataSource {
     bool treatments,
     String token,
   );
+
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -143,6 +144,24 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+
+
+  @override
+  Future<void> logout() async {
+    await localDataSource.deleteToken();
+    await localDataSource.deleteUser();
+  }
+
+  @override
+  Future<User> getUserFromToken(String token) async {
+    final user = await localDataSource.getUser();
+    if (user != null) {
+      return user;
+    } else {
+      throw Exception('No se encontró información de usuario local.');
+    }
+  }
+
   @override
   Future<void> createApiary(
     String userId,
@@ -175,22 +194,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } catch (e) {
       throw Exception('Error inesperado al crear apiario: $e');
-    }
-  }
-
-  @override
-  Future<void> logout() async {
-    await localDataSource.deleteToken();
-    await localDataSource.deleteUser();
-  }
-
-  @override
-  Future<User> getUserFromToken(String token) async {
-    final user = await localDataSource.getUser();
-    if (user != null) {
-      return user;
-    } else {
-      throw Exception('No se encontró información de usuario local.');
     }
   }
 
