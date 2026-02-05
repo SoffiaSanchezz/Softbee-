@@ -90,10 +90,7 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Color(0xFFFFF8E1),
-            ],
+            colors: [Colors.white, Color(0xFFFFF8E1)],
           ),
         ),
         child: SafeArea(
@@ -159,61 +156,127 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
   Widget _buildInteractiveMenu() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        int crossAxisCount;
-        double childAspectRatio;
+        final isSmallScreen = constraints.maxWidth < 600;
 
-        if (constraints.maxWidth < 600) {
-          crossAxisCount = 2;
-          childAspectRatio = 1.0;
-        } else if (constraints.maxWidth < 900) {
-          crossAxisCount = 3;
-          childAspectRatio = 1.1;
-        } else {
-          crossAxisCount = 3;
-          childAspectRatio = 1.2;
-        }
-
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 20,
-              mainAxisSpacing: 20,
-              childAspectRatio: childAspectRatio,
+        if (isSmallScreen) {
+          // Pantallas pequeñas: Grid de 2x2
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.9,
+              ),
+              itemCount: _menuItems.length,
+              itemBuilder: (context, index) {
+                final item = _menuItems[index];
+                return EnhancedMenuButton(
+                      title: item.title,
+                      icon: item.icon,
+                      color: item.color,
+                      description: item.description,
+                      isHovered: _hoveredIndex == index,
+                      isCompact: true,
+                      onHover: (hovered) => setState(
+                        () => _hoveredIndex = hovered ? index : null,
+                      ),
+                      onTap: () {
+                        context.goNamed(
+                          item.routeName,
+                          pathParameters: {'apiaryId': widget.apiaryId},
+                        );
+                      },
+                    )
+                    .animate()
+                    .fadeIn(duration: 600.ms, delay: (100 * index).ms)
+                    .slideY(
+                      begin: 0.3,
+                      end: 0,
+                      duration: 600.ms,
+                      delay: (100 * index).ms,
+                      curve: Curves.easeOutQuint,
+                    );
+              },
             ),
-            itemCount: _menuItems.length,
-            itemBuilder: (context, index) {
-              final item = _menuItems[index];
-              return EnhancedMenuButton(
-                title: item.title,
-                icon: item.icon,
-                color: item.color,
-                description: item.description,
-                isHovered: _hoveredIndex == index,
-                onHover: (hovered) =>
-                    setState(() => _hoveredIndex = hovered ? index : null),
-                onTap: () {
-                  context.goNamed(
-                    item.routeName,
-                    pathParameters: {'apiaryId': widget.apiaryId},
-                  );
-                },
-              )
-                  .animate()
-                  .fadeIn(duration: 600.ms, delay: (100 * index).ms)
-                  .slideY(
-                    begin: 0.3,
-                    end: 0,
-                    duration: 600.ms,
-                    delay: (100 * index).ms,
-                    curve: Curves.easeOutQuint,
-                  );
-            },
-          ),
-        );
+          );
+        } else {
+          // Pantallas medianas/grandes: Fila horizontal que ocupa todo el ancho
+          return Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
+            child: Center(
+              child: SizedBox(
+                height: _getCardHeight(constraints.maxWidth),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _menuItems.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: index < _menuItems.length - 1 ? 20 : 0,
+                        ),
+                        child:
+                            EnhancedMenuButton(
+                                  title: item.title,
+                                  icon: item.icon,
+                                  color: item.color,
+                                  description: item.description,
+                                  isHovered: _hoveredIndex == index,
+                                  isCompact: false,
+                                  onHover: (hovered) => setState(
+                                    () =>
+                                        _hoveredIndex = hovered ? index : null,
+                                  ),
+                                  onTap: () {
+                                    context.goNamed(
+                                      item.routeName,
+                                      pathParameters: {
+                                        'apiaryId': widget.apiaryId,
+                                      },
+                                    );
+                                  },
+                                )
+                                .animate()
+                                .fadeIn(
+                                  duration: 600.ms,
+                                  delay: (100 * index).ms,
+                                )
+                                .slideX(
+                                  begin: 0.3,
+                                  end: 0,
+                                  duration: 600.ms,
+                                  delay: (100 * index).ms,
+                                  curve: Curves.easeOutQuint,
+                                ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          );
+        }
       },
     );
+  }
+
+  double _getCardHeight(double screenWidth) {
+    if (screenWidth >= 1200) {
+      return 220;
+    } else if (screenWidth >= 900) {
+      return 200;
+    } else {
+      return 180;
+    }
   }
 }
 
@@ -223,6 +286,7 @@ class EnhancedMenuButton extends StatefulWidget {
   final Color color;
   final String description;
   final bool isHovered;
+  final bool isCompact;
   final Function(bool) onHover;
   final VoidCallback onTap;
 
@@ -233,6 +297,7 @@ class EnhancedMenuButton extends StatefulWidget {
     required this.color,
     required this.description,
     required this.isHovered,
+    this.isCompact = false,
     required this.onHover,
     required this.onTap,
   });
@@ -272,6 +337,7 @@ class _EnhancedMenuButtonState extends State<EnhancedMenuButton>
       }
     });
   }
+
   void _onTapCancel() => _scaleController.reverse();
 
   @override
@@ -300,8 +366,7 @@ class _EnhancedMenuButtonState extends State<EnhancedMenuButton>
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color:
-                      widget.color.withOpacity(widget.isHovered ? 0.4 : 0.2),
+                  color: widget.color.withOpacity(widget.isHovered ? 0.4 : 0.2),
                   blurRadius: widget.isHovered ? 20 : 12,
                   offset: Offset(0, widget.isHovered ? 12 : 6),
                 ),
@@ -311,62 +376,97 @@ class _EnhancedMenuButtonState extends State<EnhancedMenuButton>
               borderRadius: BorderRadius.circular(24),
               child: Stack(
                 children: [
+                  // Icono de fondo decorativo
                   Positioned(
-                    right: -30,
-                    bottom: -30,
+                    right: widget.isCompact ? -20 : -30,
+                    bottom: widget.isCompact ? -20 : -30,
                     child: Opacity(
-                      opacity: 0.2,
-                      child:
-                          Icon(widget.icon, size: 140, color: Colors.white),
+                      opacity: 0.15,
+                      child: Icon(
+                        widget.icon,
+                        size: widget.isCompact ? 100 : 140,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
+                  // Contenido principal
                   Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: EdgeInsets.all(widget.isCompact ? 16.0 : 20.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Icon(widget.icon,
-                                      color: Colors.white, size: 28),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Icono en contenedor
+                              Container(
+                                padding: EdgeInsets.all(
+                                  widget.isCompact ? 10 : 12,
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  widget.title,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
+                                child: Icon(
+                                  widget.icon,
+                                  color: Colors.white,
+                                  size: widget.isCompact ? 24 : 28,
+                                ),
+                              ),
+                              SizedBox(height: widget.isCompact ? 12 : 16),
+                              // Titulo
+                              Text(
+                                widget.title,
+                                style: GoogleFonts.poppins(
+                                  fontSize: widget.isCompact ? 16 : 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: widget.isCompact ? 4 : 8),
+                              // Descripcion
+                              Flexible(
+                                child: Text(
                                   widget.description,
                                   style: GoogleFonts.poppins(
-                                    fontSize: 13,
+                                    fontSize: widget.isCompact ? 11 : 13,
                                     color: Colors.white.withOpacity(0.9),
-                                    height: 1.4,
+                                    height: 1.3,
                                   ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
+                        // Flecha animada
                         AnimatedOpacity(
                           duration: const Duration(milliseconds: 300),
                           opacity: widget.isHovered ? 1.0 : 0.0,
-                          child: const Icon(Icons.arrow_forward,
-                              color: Colors.white, size: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Ver',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.arrow_forward_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

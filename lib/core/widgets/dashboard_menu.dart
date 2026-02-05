@@ -30,12 +30,12 @@ class MenuScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFC107).withOpacity(0.15),
+                color: const Color.fromARGB(255, 79, 70, 1).withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Image.asset(
-                'assets/images/softbee_logo.png', // Reemplaza con tu asset
-                width: isSmallScreen ? 28 : 32,
+                'assets/images/Logo.png', // Reemplaza con tu asset
+                width: isSmallScreen ? 32 : 34,
                 height: isSmallScreen ? 28 : 32,
                 // Si no tienes el asset, usa un icono:
                 errorBuilder: (context, error, stackTrace) => Icon(
