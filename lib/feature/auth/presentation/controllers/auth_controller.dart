@@ -53,8 +53,8 @@ class AuthController extends StateNotifier<AuthState> {
   final CheckAuthStatusUseCase checkAuthStatusUseCase;
   final GetUserFromTokenUseCase getUserFromTokenUseCase;
   final RegisterUseCase registerUseCase; // Add RegisterUseCase
-  final CreateApiaryUseCase createApiaryUseCase; // Se inyectará en RegisterController
-
+  final CreateApiaryUseCase
+  createApiaryUseCase; // Se inyectará en RegisterController
 
   AuthController({
     required this.loginUseCase,
@@ -163,6 +163,7 @@ class AuthController extends StateNotifier<AuthState> {
           isRegistered: true,
           user: user,
           token: token,
+          isAuthenticating: false,
           error: null,
         );
         return {'token': token, 'user': user};

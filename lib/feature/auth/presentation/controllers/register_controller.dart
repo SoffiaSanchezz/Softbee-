@@ -8,16 +8,19 @@ import '../../core/usecase/create_apiary_usecase.dart'; // Importar el nuevo cas
 import '../../data/datasources/auth_remote_datasource.dart'; // Para generateUsername
 import '../controllers/auth_controller.dart';
 import '../providers/register_state.dart';
+import 'package:Softbee/core/services/geocoding_service.dart'; // Importar GeocodingService
 
 class RegisterController extends StateNotifier<RegisterState> {
   final AuthController _authController;
   final RegisterUseCase _registerUseCase;
   final CreateApiaryUseCase _createApiaryUseCase;
+  final GeocodingService _geocodingService; // Inyectar GeocodingService
 
   RegisterController(
     this._authController,
     this._registerUseCase,
     this._createApiaryUseCase,
+    this._geocodingService, // Recibir GeocodingService en el constructor
   ) : super(const RegisterState());
 
   // Métodos para actualizar los campos del formulario
@@ -130,12 +133,12 @@ class RegisterController extends StateNotifier<RegisterState> {
   bool _isStep2Valid() {
     if (state.apiaries.isEmpty) return false;
     for (var apiary in state.apiaries) {
-      if (apiary.name.isEmpty ||
-          apiary.name.length < 3 ||
-          apiary.address.isEmpty ||
-          apiary.address.length < 10) {
+      if (apiary.name.isEmpty || apiary.name.length < 3) {
+        // Only validate name presence and minimum length
         return false;
       }
+      // La dirección es ahora opcional. El backend acepta `null` o cadena vacía.
+      // `isLocationValid` y `locationValidationAttempted` son solo para feedback visual, no deben bloquear la presentación.
     }
     return true;
   }
@@ -185,8 +188,36 @@ class RegisterController extends StateNotifier<RegisterState> {
 
   void updateApiaryAddress(int index, String value) {
     final newApiaries = List<RegisterApiaryData>.from(state.apiaries);
-    newApiaries[index] = newApiaries[index].copyWith(address: value);
+    // Reiniciar validación al cambiar la dirección
+    newApiaries[index] = newApiaries[index].copyWith(
+      address: value,
+      isLocationValid: false,
+      locationValidationAttempted: false,
+    );
     state = state.copyWith(apiaries: newApiaries);
+  }
+
+  Future<void> validateApiaryLocation(int index) async {
+    final currentApiaries = List<RegisterApiaryData>.from(state.apiaries);
+    final apiaryToValidate = currentApiaries[index];
+
+    // Marcar que se ha intentado la validación
+    currentApiaries[index] = apiaryToValidate.copyWith(
+      locationValidationAttempted: true,
+    );
+    if (!mounted) return;
+    state = state.copyWith(apiaries: currentApiaries);
+
+    // Con el servicio de geocodificación actualizado, obtenemos la validación real.
+    final isValid = await _geocodingService.validateAddress(
+      apiaryToValidate.address,
+    );
+
+    if (!mounted) return;
+    currentApiaries[index] = apiaryToValidate.copyWith(
+      isLocationValid: isValid,
+    );
+    state = state.copyWith(apiaries: currentApiaries);
   }
 
   void updateApiaryTreatments(int index, bool value) {
@@ -200,34 +231,22 @@ class RegisterController extends StateNotifier<RegisterState> {
   }
 
   Future<void> submitRegistration() async {
-    print('DEBUG: submitRegistration - Inicio');
+    if (!mounted) return;
     state = state.copyWith(
       isLoading: true,
       clearErrorMessage: true,
       showValidationErrors: true,
     );
 
-    if (!_isStep1Valid()) {
-      print('DEBUG: submitRegistration - Paso 1 de validación fallido.');
+    if (!_isStep1Valid() || !_isStep2Valid()) {
+      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
-        errorMessage:
-            'Por favor, completa los campos de información personal correctamente.',
+        errorMessage: 'Por favor, completa todos los campos correctamente.',
       );
       return;
     }
-    if (!_isStep2Valid()) {
-      print('DEBUG: submitRegistration - Paso 2 de validación fallido.');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage:
-            'Por favor, completa los campos de información de apiarios correctamente.',
-      );
-      return;
-    }
-    print('DEBUG: submitRegistration - Validaciones de pasos 1 y 2 OK.');
 
-    // 1. Registrar usuario
     final username = AuthRemoteDataSourceImpl.generateUsername(state.email);
     final registerParams = RegisterParams(
       name: state.name,
@@ -235,9 +254,6 @@ class RegisterController extends StateNotifier<RegisterState> {
       email: state.email,
       phone: _cleanPhone(state.phone),
       password: state.password,
-    );
-    print(
-      'DEBUG: submitRegistration - Preparando registro de usuario para email: ${registerParams.email}',
     );
 
     try {
@@ -249,87 +265,51 @@ class RegisterController extends StateNotifier<RegisterState> {
         registerParams.password,
       );
 
+      if (!mounted) return;
+
       final token = registerResult['token'] as String;
       final user = registerResult['user'] as User;
       final userId = user.id;
 
-      print(
-        'DEBUG: submitRegistration - Usuario registrado exitosamente. userId: $userId, token: ${token.substring(0, 10)}...',
-      );
-
-      // 2. Crear apiarios
-      bool allApiariesCreated = true;
-      print(
-        'DEBUG: submitRegistration - Intentando crear ${state.apiaries.length} apiarios.',
-      );
+      // Apiary creation is now a best-effort, non-blocking operation
+      String? apiaryCreationError;
       for (final apiaryData in state.apiaries) {
-        print(
-          'DEBUG: submitRegistration - Procesando apiario: ${apiaryData.name}',
-        );
+        final location = apiaryData.address;
+
         final createApiaryParams = CreateApiaryParams(
           userId: userId,
           apiaryName: apiaryData.name,
-          location: apiaryData.address,
-          beehivesCount: 0, // Default value as input is removed
+          location: location,
+          beehivesCount: 0,
           treatments: apiaryData.appliesTreatments,
           token: token,
         );
 
         final apiaryResult = await _createApiaryUseCase(createApiaryParams);
-        apiaryResult.fold(
-          (failure) {
-            allApiariesCreated = false;
-            print(
-              'ERROR: submitRegistration - Fallo al crear apiario ${apiaryData.name}: ${failure.message}',
-            );
-            // Podríamos acumular errores aquí si queremos mostrarlos todos
-            // state = state.copyWith(errorMessage: (state.errorMessage ?? '') + 'Error: ${apiaryData.name} - ${failure.message}\n');
-          },
-          (_) {
-            print(
-              'DEBUG: submitRegistration - Apiario ${apiaryData.name} creado exitosamente.',
-            );
-          },
-        );
-        if (!allApiariesCreated) {
-          print(
-            'DEBUG: submitRegistration - Interrumpiendo creación de apiarios debido a un fallo.',
-          );
-          break; // Si falla uno, no seguir con el resto
+
+        if (apiaryResult.isLeft) {
+          apiaryCreationError =
+              'Se registró tu cuenta, pero falló la creación del apiario "${apiaryData.name}". Podrás crearlo más tarde.';
+          break; // Stop on first error
         }
       }
 
-      if (allApiariesCreated) {
-        state = state.copyWith(
-          isLoading: false,
-          isRegistered: true,
-          errorMessage: null,
-        );
-        print(
-          'DEBUG: submitRegistration - Todos los apiarios se crearon correctamente.',
-        );
-        // Iniciar sesión automáticamente después del registro exitoso
-        // Esto ya lo hace AuthController, solo necesitamos un trigger para la UI
-      } else {
-        state = state.copyWith(
-          isLoading: false,
-          errorMessage:
-              'Usuario registrado, pero hubo problemas al crear uno o más apiarios.',
-          isRegistered: false,
-        );
-        print(
-          'ERROR: submitRegistration - Usuario registrado, pero problemas al crear apiarios.',
-        );
-      }
+      if (!mounted) return;
+
+      // The registration is successful regardless of apiary creation.
+      state = state.copyWith(
+        isLoading: false,
+        isRegistered: true,
+        errorMessage: apiaryCreationError, // Show warning if apiaries failed
+      );
     } catch (e) {
-      print('ERROR: submitRegistration - Excepción general: $e');
+      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString().replaceFirst("Exception: ", ""),
         isRegistered: false,
       );
     }
-    print('DEBUG: submitRegistration - Fin');
   }
 
   String _mapFailureToMessage(Failure failure) {
