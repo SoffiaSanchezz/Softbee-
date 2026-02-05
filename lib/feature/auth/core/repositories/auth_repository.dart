@@ -22,5 +22,4 @@ abstract class AuthRepository {
     bool treatments,
     String token,
   );
-
 }
