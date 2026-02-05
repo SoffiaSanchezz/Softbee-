@@ -15,7 +15,9 @@ class ApiariesState extends Equatable {
   final bool isCreating;
   final bool isUpdating;
   final bool isDeleting;
-  final List<Apiary> apiaries;
+  final List<Apiary> allApiaries; // Original list of all apiaries
+  final List<Apiary> filteredApiaries; // List to display after filtering
+  final String searchQuery; // Current search query
   final String? errorMessage;
   final String? successMessage;
   final String? errorCreating;
@@ -27,7 +29,9 @@ class ApiariesState extends Equatable {
     this.isCreating = false,
     this.isUpdating = false,
     this.isDeleting = false,
-    this.apiaries = const [],
+    this.allApiaries = const [],
+    this.filteredApiaries = const [],
+    this.searchQuery = '',
     this.errorMessage,
     this.successMessage,
     this.errorCreating,
@@ -40,7 +44,9 @@ class ApiariesState extends Equatable {
     bool? isCreating,
     bool? isUpdating,
     bool? isDeleting,
-    List<Apiary>? apiaries,
+    List<Apiary>? allApiaries,
+    List<Apiary>? filteredApiaries,
+    String? searchQuery,
     String? errorMessage,
     String? successMessage,
     String? errorCreating,
@@ -54,9 +60,13 @@ class ApiariesState extends Equatable {
       isCreating: isCreating ?? this.isCreating,
       isUpdating: isUpdating ?? this.isUpdating,
       isDeleting: isDeleting ?? this.isDeleting,
-      apiaries: apiaries ?? this.apiaries,
+      allApiaries: allApiaries ?? this.allApiaries,
+      filteredApiaries: filteredApiaries ?? this.filteredApiaries,
+      searchQuery: searchQuery ?? this.searchQuery,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
-      successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
+      successMessage: clearSuccess
+          ? null
+          : successMessage ?? this.successMessage,
       errorCreating: clearError ? null : errorCreating ?? this.errorCreating,
       errorUpdating: clearError ? null : errorUpdating ?? this.errorUpdating,
       errorDeleting: clearError ? null : errorDeleting ?? this.errorDeleting,
@@ -65,17 +75,19 @@ class ApiariesState extends Equatable {
 
   @override
   List<Object?> get props => [
-        isLoading,
-        isCreating,
-        isUpdating,
-        isDeleting,
-        apiaries,
-        errorMessage,
-        successMessage,
-        errorCreating,
-        errorUpdating,
-        errorDeleting,
-      ];
+    isLoading,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    allApiaries,
+    filteredApiaries,
+    searchQuery,
+    errorMessage,
+    successMessage,
+    errorCreating,
+    errorUpdating,
+    errorDeleting,
+  ];
 }
 
 // 2. ApiariesController: Manages the state and interacts with use cases
@@ -97,8 +109,21 @@ class ApiariesController extends StateNotifier<ApiariesState> {
   String? get _currentUserId => authController.state.user?.id;
   String? get _currentToken => authController.state.token;
 
+  void applyFilter(String query) {
+    final lowerCaseQuery = query.toLowerCase();
+    final filtered = state.allApiaries.where((apiary) {
+      return apiary.name.toLowerCase().contains(lowerCaseQuery);
+    }).toList();
+
+    state = state.copyWith(searchQuery: query, filteredApiaries: filtered);
+  }
+
   Future<void> fetchApiaries() async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    state = state.copyWith(
+      isLoading: true,
+      clearError: true,
+      clearSuccess: true,
+    );
 
     if (!_isAuthenticated()) {
       state = state.copyWith(
@@ -121,13 +146,28 @@ class ApiariesController extends StateNotifier<ApiariesState> {
         final userApiaries = allApiaries
             .where((apiary) => apiary.userId == _currentUserId)
             .toList();
-        state = state.copyWith(isLoading: false, apiaries: userApiaries);
+        state = state.copyWith(
+          isLoading: false,
+          allApiaries: userApiaries,
+          filteredApiaries:
+              userApiaries, // Initially, filtered list is all apiaries
+          searchQuery: '',
+        );
       },
     );
   }
 
-  Future<void> createApiary(String name, String? location, int beehivesCount, bool treatments) async {
-    state = state.copyWith(isCreating: true, clearError: true, clearSuccess: true);
+  Future<void> createApiary(
+    String name,
+    String? location,
+    int? beehivesCount,
+    bool treatments,
+  ) async {
+    state = state.copyWith(
+      isCreating: true,
+      clearError: true,
+      clearSuccess: true,
+    );
 
     if (!_isAuthenticated()) {
       state = state.copyWith(
@@ -155,17 +195,31 @@ class ApiariesController extends StateNotifier<ApiariesState> {
         );
       },
       (newApiary) {
+        final updatedAllApiaries = [...state.allApiaries, newApiary];
         state = state.copyWith(
           isCreating: false,
-          apiaries: [...state.apiaries, newApiary],
+          allApiaries: updatedAllApiaries,
           successMessage: 'Apiary created successfully!',
         );
+        applyFilter(
+          state.searchQuery,
+        ); // Re-apply filter to update filteredApiaries
       },
     );
   }
 
-  Future<void> updateApiary(String apiaryId, String? name, String? location, int? beehivesCount, bool? treatments) async {
-    state = state.copyWith(isUpdating: true, clearError: true, clearSuccess: true);
+  Future<void> updateApiary(
+    String apiaryId,
+    String? name,
+    String? location,
+    int? beehivesCount,
+    bool? treatments,
+  ) async {
+    state = state.copyWith(
+      isUpdating: true,
+      clearError: true,
+      clearSuccess: true,
+    );
 
     if (!_isAuthenticated()) {
       state = state.copyWith(
@@ -194,20 +248,27 @@ class ApiariesController extends StateNotifier<ApiariesState> {
         );
       },
       (updatedApiary) {
-        final updatedList = state.apiaries.map((apiary) {
+        final updatedAllApiaries = state.allApiaries.map((apiary) {
           return apiary.id == updatedApiary.id ? updatedApiary : apiary;
         }).toList();
         state = state.copyWith(
           isUpdating: false,
-          apiaries: updatedList,
+          allApiaries: updatedAllApiaries,
           successMessage: 'Apiary updated successfully!',
         );
+        applyFilter(
+          state.searchQuery,
+        ); // Re-apply filter to update filteredApiaries
       },
     );
   }
 
   Future<void> deleteApiary(String apiaryId) async {
-    state = state.copyWith(isDeleting: true, clearError: true, clearSuccess: true);
+    state = state.copyWith(
+      isDeleting: true,
+      clearError: true,
+      clearSuccess: true,
+    );
 
     if (!_isAuthenticated()) {
       state = state.copyWith(
@@ -217,7 +278,10 @@ class ApiariesController extends StateNotifier<ApiariesState> {
       return;
     }
 
-    final params = DeleteApiaryParams(apiaryId: apiaryId, userId: _currentUserId!);
+    final params = DeleteApiaryParams(
+      apiaryId: apiaryId,
+      userId: _currentUserId!,
+    );
 
     final result = await deleteApiaryUseCase(params);
 
@@ -229,19 +293,25 @@ class ApiariesController extends StateNotifier<ApiariesState> {
         );
       },
       (_) {
-        final updatedList =
-            state.apiaries.where((apiary) => apiary.id != apiaryId).toList();
+        final updatedAllApiaries = state.allApiaries
+            .where((apiary) => apiary.id != apiaryId)
+            .toList();
         state = state.copyWith(
           isDeleting: false,
-          apiaries: updatedList,
+          allApiaries: updatedAllApiaries,
           successMessage: 'Apiary deleted successfully!',
         );
+        applyFilter(
+          state.searchQuery,
+        ); // Re-apply filter to update filteredApiaries
       },
     );
   }
 
   bool _isAuthenticated() {
-    return authController.state.isAuthenticated && authController.state.user != null && _currentUserId != null;
+    return authController.state.isAuthenticated &&
+        authController.state.user != null &&
+        _currentUserId != null;
   }
 
   String _mapFailureToMessage(Failure failure, String operation) {
