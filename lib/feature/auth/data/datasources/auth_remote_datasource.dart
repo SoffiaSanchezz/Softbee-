@@ -20,7 +20,6 @@ abstract class AuthRemoteDataSource {
     bool treatments,
     String token,
   );
-
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -144,8 +143,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
-
-
   @override
   Future<void> logout() async {
     await localDataSource.deleteToken();
@@ -177,7 +174,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {
           'user_id': userId,
           'name': apiaryName,
-          'location': location,
+          'location': location.isEmpty ? null : location, // Send null if empty
           'treatments': treatments,
           'beehives_count': beehivesCount,
         },
