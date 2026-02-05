@@ -6,10 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../controllers/register_controller.dart';
 import '../providers/auth_providers.dart';
 import '../providers/register_state.dart';
-import '../../../../core/router/app_routes.dart'; // Importar AppRoutes
-
-// Se elimina la clase AuthService y AuthLocalDataSource que no existen en el contexto
-// y se delega la funcionalidad a AuthRemoteDataSourceImpl y AuthLocalDataSourceImpl a través de Riverpod.
+import 'package:Softbee/core/router/app_routes.dart'; // Importar AppRoutes
+// Importar AppColors
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key}); // Añadir super.key
@@ -161,7 +159,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     Navigator.of(context).pop();
                     GoRouter.of(
                       context,
-                    ).go(AppRoutes.dashboard); // Redirigir al dashboard
+                    ).go(AppRoutes.dashboardRoute); // Redirigir al dashboard
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
@@ -254,7 +252,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     'Intentar de nuevo',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -266,7 +264,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     );
   }
 
-  // Añadir método _buildTextField faltante
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -404,7 +401,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     );
   }
 
-  // Añadir método _buildFooter faltante
   Widget _buildFooter(double width, double fontSize) {
     return Column(
       children: [
@@ -942,7 +938,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             title: Text(
               'Información Personal',
               style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textDark,
               ),
             ),
@@ -1036,7 +1032,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             title: Text(
               'Información de Apiarios',
               style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textDark,
               ),
             ),
@@ -1067,7 +1063,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         registerController.updateApiaryTreatments(index, value),
                     showValidationErrors: registerState.showValidationErrors,
                   );
-                }).toList(),
+                }),
                 Padding(
                   padding: const EdgeInsets.only(top: 16, bottom: 20),
                   child: OutlinedButton.icon(
@@ -1342,10 +1338,7 @@ class _ApiaryCardState extends ConsumerState<ApiaryCard> {
                       widget.showValidationErrors &&
                           widget.apiary.address.isEmpty
                       ? 'La dirección es requerida'
-                      : (widget.showValidationErrors &&
-                                widget.apiary.address.length < 10
-                            ? 'La dirección es muy corta'
-                            : null),
+                      : null,
                   onChanged: (value) {
                     /* Handled by listener */
                   },
@@ -1544,7 +1537,7 @@ class _ApiaryCardState extends ConsumerState<ApiaryCard> {
         ),
         value: value,
         onChanged: onChanged,
-        activeColor: AppColors.primaryYellow,
+        activeThumbColor: AppColors.primaryYellow,
         activeTrackColor: AppColors.primaryYellow.withOpacity(0.3),
         inactiveThumbColor: Colors.grey,
         inactiveTrackColor: Colors.grey.withOpacity(0.3),

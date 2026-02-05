@@ -26,12 +26,20 @@ class ForgotPasswordState extends Equatable {
     return ForgotPasswordState(
       isLoading: isLoading ?? this.isLoading,
       emailSent: emailSent ?? this.emailSent,
-      errorMessage: clearErrorMessage ? null : errorMessage ?? this.errorMessage,
+      errorMessage: clearErrorMessage
+          ? null
+          : errorMessage ?? this.errorMessage,
       email: email ?? this.email,
       lastSentTime: lastSentTime ?? this.lastSentTime,
     );
   }
 
   @override
-  List<Object?> get props => [isLoading, emailSent, errorMessage, email, lastSentTime];
+  List<Object?> get props => [
+    isLoading,
+    emailSent,
+    errorMessage,
+    email,
+    lastSentTime,
+  ];
 }

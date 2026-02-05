@@ -70,22 +70,26 @@ class _NotFoundPageState extends State<NotFoundPage>
 
     // Generar abejas volando
     for (int i = 0; i < 6; i++) {
-      _flyingBees.add(FlyingBee(
-        startX: _random.nextDouble(),
-        startY: _random.nextDouble(),
-        duration: 8 + _random.nextInt(7),
-        delay: i * 0.5,
-        size: 20 + _random.nextDouble() * 15,
-      ));
+      _flyingBees.add(
+        FlyingBee(
+          startX: _random.nextDouble(),
+          startY: _random.nextDouble(),
+          duration: 8 + _random.nextInt(7),
+          delay: i * 0.5,
+          size: 20 + _random.nextDouble() * 15,
+        ),
+      );
     }
 
     // Generar gotas de miel
     for (int i = 0; i < 5; i++) {
-      _honeyDrops.add(HoneyDrop(
-        x: _random.nextDouble(),
-        duration: 4 + _random.nextInt(4),
-        delay: i * 0.8,
-      ));
+      _honeyDrops.add(
+        HoneyDrop(
+          x: _random.nextDouble(),
+          duration: 4 + _random.nextInt(4),
+          delay: i * 0.8,
+        ),
+      );
     }
   }
 
@@ -193,15 +197,15 @@ class _NotFoundPageState extends State<NotFoundPage>
                       constraints: const BoxConstraints(maxWidth: 450),
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Color.fromRGBO(255, 255, 255, 0.9),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: BeeThemeColors.honey.withOpacity(0.3),
+                          color: Color.fromRGBO(245, 158, 11, 0.3),
                           width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: BeeThemeColors.honey.withOpacity(0.2),
+                            color: Color.fromRGBO(245, 158, 11, 0.2),
                             blurRadius: 30,
                             offset: const Offset(0, 10),
                           ),
@@ -249,7 +253,7 @@ class _NotFoundPageState extends State<NotFoundPage>
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16,
-                              color: BeeThemeColors.brown.withOpacity(0.7),
+                              color: Color.fromRGBO(120, 53, 15, 0.7),
                               height: 1.6,
                             ),
                           ),
@@ -261,10 +265,17 @@ class _NotFoundPageState extends State<NotFoundPage>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(5, (i) {
                               return Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                                 child: HexagonWidget(
                                   size: 12,
-                                  color: BeeThemeColors.honey.withOpacity(0.5 + i * 0.1),
+                                  color: Color.fromRGBO(
+                                    245,
+                                    158,
+                                    11,
+                                    (0.5 + i * 0.1).clamp(0.0, 1.0).toDouble(),
+                                  ),
                                 ),
                               );
                             }),
@@ -280,7 +291,9 @@ class _NotFoundPageState extends State<NotFoundPage>
                             children: [
                               ElevatedButton.icon(
                                 onPressed: () {
-                                  GoRouter.of(context).go(AppRoutes.dashboard); // Usando go_router y AppRoutes.dashboard
+                                  GoRouter.of(context).go(
+                                    AppRoutes.dashboardRoute,
+                                  ); // Usando go_router y AppRoutes.dashboard
                                 },
                                 icon: const Icon(Icons.home_rounded),
                                 label: const Text('Volver a la colmena'),
@@ -331,10 +344,10 @@ class _NotFoundPageState extends State<NotFoundPage>
                       constraints: const BoxConstraints(maxWidth: 400),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: BeeThemeColors.honey.withOpacity(0.1),
+                        color: Color.fromRGBO(245, 158, 11, 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: BeeThemeColors.honey.withOpacity(0.2),
+                          color: Color.fromRGBO(245, 158, 11, 0.2),
                         ),
                       ),
                       child: Row(
@@ -346,7 +359,7 @@ class _NotFoundPageState extends State<NotFoundPage>
                               '¿Sabías que una abeja visita entre 50 y 1000 flores en un solo viaje?',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: BeeThemeColors.brown.withOpacity(0.8),
+                                color: Color.fromRGBO(120, 53, 15, 0.8),
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
@@ -379,9 +392,7 @@ class MainBee extends StatelessWidget {
     return SizedBox(
       width: 80,
       height: 70,
-      child: CustomPaint(
-        painter: BeePainter(wingAngle: wingAngle),
-      ),
+      child: CustomPaint(painter: BeePainter(wingAngle: wingAngle)),
     );
   }
 }
@@ -397,16 +408,20 @@ class BeePainter extends CustomPainter {
 
     // Sombra
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.2)
+      ..color = Color.fromRGBO(0, 0, 0, 0.2)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     canvas.drawOval(
-      Rect.fromCenter(center: center + const Offset(3, 3), width: 45, height: 35),
+      Rect.fromCenter(
+        center: center + const Offset(3, 3),
+        width: 45,
+        height: 35,
+      ),
       shadowPaint,
     );
 
     // Alas
     final wingPaint = Paint()
-      ..color = Colors.white.withOpacity(0.7)
+      ..color = Color.fromRGBO(255, 255, 255, 0.7)
       ..style = PaintingStyle.fill;
 
     final wingOffset = wingAngle * 10;
@@ -485,7 +500,12 @@ class BeePainter extends CustomPainter {
 
     final smilePath = Path()
       ..moveTo(center.dx - 6, center.dy + 5)
-      ..quadraticBezierTo(center.dx, center.dy + 12, center.dx + 6, center.dy + 5);
+      ..quadraticBezierTo(
+        center.dx,
+        center.dy + 12,
+        center.dx + 6,
+        center.dy + 5,
+      );
     canvas.drawPath(smilePath, smilePaint);
 
     // Mejillas sonrojadas
@@ -548,7 +568,7 @@ class HoneycombBackground extends StatelessWidget {
               top: row * hexSize * 0.866,
               child: HexagonWidget(
                 size: hexSize,
-                color: BeeThemeColors.honey.withOpacity(0.08),
+                color: Color.fromRGBO(245, 158, 11, 0.08),
                 filled: Random().nextDouble() > 0.85,
               ),
             );
@@ -581,10 +601,7 @@ class HexagonWidget extends StatelessWidget {
       width: size,
       height: size * 0.866,
       child: CustomPaint(
-        painter: HexagonPainter(
-          color: color,
-          filled: filled,
-        ),
+        painter: HexagonPainter(color: color, filled: filled),
       ),
     );
   }
@@ -611,7 +628,7 @@ class HexagonPainter extends CustomPainter {
     path.close();
 
     final paint = Paint()
-      ..color = filled ? BeeThemeColors.honey.withOpacity(0.3) : color
+      ..color = filled ? Color.fromRGBO(245, 158, 11, 0.3) : color
       ..style = filled ? PaintingStyle.fill : PaintingStyle.stroke
       ..strokeWidth = 1;
 
@@ -647,11 +664,7 @@ class HoneyDrop {
   final int duration;
   final double delay;
 
-  HoneyDrop({
-    required this.x,
-    required this.duration,
-    required this.delay,
-  });
+  HoneyDrop({required this.x, required this.duration, required this.delay});
 }
 
 class AnimatedFlyingBee extends StatefulWidget {
@@ -675,11 +688,14 @@ class _AnimatedFlyingBeeState extends State<AnimatedFlyingBee>
       vsync: this,
     );
 
-    Future.delayed(Duration(milliseconds: (widget.bee.delay * 1000).toInt()), () {
-      if (mounted) {
-        _controller.repeat();
-      }
-    });
+    Future.delayed(
+      Duration(milliseconds: (widget.bee.delay * 1000).toInt()),
+      () {
+        if (mounted) {
+          _controller.repeat();
+        }
+      },
+    );
   }
 
   @override
@@ -697,7 +713,8 @@ class _AnimatedFlyingBeeState extends State<AnimatedFlyingBee>
         final screenHeight = MediaQuery.of(context).size.height;
 
         final x = (widget.bee.startX + _controller.value) % 1.0 * screenWidth;
-        final y = widget.bee.startY * screenHeight +
+        final y =
+            widget.bee.startY * screenHeight +
             sin(_controller.value * 4 * pi) * 30;
 
         return Positioned(
@@ -737,11 +754,14 @@ class _AnimatedHoneyDropState extends State<AnimatedHoneyDrop>
       vsync: this,
     );
 
-    Future.delayed(Duration(milliseconds: (widget.drop.delay * 1000).toInt()), () {
-      if (mounted) {
-        _controller.repeat();
-      }
-    });
+    Future.delayed(
+      Duration(milliseconds: (widget.drop.delay * 1000).toInt()),
+      () {
+        if (mounted) {
+          _controller.repeat();
+        }
+      },
+    );
   }
 
   @override
@@ -768,10 +788,7 @@ class _AnimatedHoneyDropState extends State<AnimatedHoneyDrop>
               gradient: const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  BeeThemeColors.honeyLight,
-                  BeeThemeColors.honey,
-                ],
+                colors: [BeeThemeColors.honeyLight, BeeThemeColors.honey],
               ),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(6),
@@ -781,7 +798,7 @@ class _AnimatedHoneyDropState extends State<AnimatedHoneyDrop>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: BeeThemeColors.honey.withOpacity(0.4),
+                  color: Color.fromRGBO(245, 158, 11, 0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -793,4 +810,3 @@ class _AnimatedHoneyDropState extends State<AnimatedHoneyDrop>
     );
   }
 }
-

@@ -20,21 +20,35 @@ class LoginController extends StateNotifier<LoginState> {
   }
 
   Future<void> login() async {
-    state = state.copyWith(isLoading: true, errorMessage: null, showValidationErrors: true);
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      showValidationErrors: true,
+    );
 
     if (!state.isFormValid) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Por favor, complete todos los campos requeridos correctamente.');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage:
+            'Por favor, complete todos los campos requeridos correctamente.',
+      );
       return;
     }
 
     // Add email format validation
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(state.identifier)) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Por favor, ingrese un formato de correo electrónico válido.');
+    if (!RegExp(
+      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+    ).hasMatch(state.identifier)) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage:
+            'Por favor, ingrese un formato de correo electrónico válido.',
+      );
       return;
     }
 
     // Simulate network delay
-    await Future.delayed(const Duration(seconds: 2)); 
+    await Future.delayed(const Duration(seconds: 2));
 
     // This part bridges to the existing global AuthController.
     // The AuthController itself handles its state and uses the provided use cases.
@@ -49,13 +63,16 @@ class LoginController extends StateNotifier<LoginState> {
     // By awaiting `_authController.login` first and then checking its state, we avoid directly
     // updating `this.state` from a callback of `_loginUseCase` that might finish later.
 
-    if (mounted) { // Explicitly checking mounted for the LoginController's state update.
+    if (mounted) {
+      // Explicitly checking mounted for the LoginController's state update.
       if (_authController.state.isAuthenticated) {
         state = state.copyWith(isLoading: false);
       } else {
         state = state.copyWith(
           isLoading: false,
-          errorMessage: _authController.state.error ?? 'Error en el inicio de sesión. Inténtalo de nuevo.',
+          errorMessage:
+              _authController.state.error ??
+              'Error en el inicio de sesión. Inténtalo de nuevo.',
         );
       }
     }
@@ -63,7 +80,6 @@ class LoginController extends StateNotifier<LoginState> {
 
   // To check if the controller is mounted, we need to add a private field.
   // This is a common pattern for StateNotifiers that interact with async operations.
+  @override
   bool get mounted => hasListeners; // A proxy for mounted state in StateNotifier
-
-
 }

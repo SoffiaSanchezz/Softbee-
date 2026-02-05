@@ -1,3 +1,4 @@
+import 'package:Softbee/feature/auth/core/usecase/create_apiary_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecase/usecase.dart';
@@ -52,15 +53,16 @@ class AuthController extends StateNotifier<AuthState> {
   final CheckAuthStatusUseCase checkAuthStatusUseCase;
   final GetUserFromTokenUseCase getUserFromTokenUseCase;
   final RegisterUseCase registerUseCase; // Add RegisterUseCase
-  // final CreateApiaryUseCase createApiaryUseCase; // Se inyectará en RegisterController
+  final CreateApiaryUseCase
+  createApiaryUseCase; // Se inyectará en RegisterController
 
   AuthController({
     required this.loginUseCase,
     required this.logoutUseCase,
     required this.checkAuthStatusUseCase,
     required this.getUserFromTokenUseCase,
-    required this.registerUseCase, // Initialize RegisterUseCase
-    // required this.createApiaryUseCase,
+    required this.registerUseCase,
+    required this.createApiaryUseCase,
   }) : super(const AuthState());
 
   Future<void> checkAuthStatus() async {
@@ -82,7 +84,11 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(isLoading: true, isAuthenticating: true, error: null);
+    state = state.copyWith(
+      isLoading: true,
+      isAuthenticating: true,
+      error: null,
+    );
 
     final loginResult = await loginUseCase(LoginParams(email, password));
 
@@ -148,13 +154,16 @@ class AuthController extends StateNotifier<AuthState> {
         throw Exception(_mapFailureToMessage(failure));
       },
       (data) {
-        final token = data['access_token'] as String; // Usar 'access_token' para consistencia
+        final token =
+            data['access_token']
+                as String; // Usar 'access_token' para consistencia
         final user = data['user'] as User;
         state = state.copyWith(
           isLoading: false,
           isRegistered: true,
           user: user,
           token: token,
+          isAuthenticating: false,
           error: null,
         );
         return {'token': token, 'user': user};
@@ -173,7 +182,9 @@ class AuthController extends StateNotifier<AuthState> {
         );
       },
       (_) {
-        state = const AuthState(isAuthenticating: false); // Reset state completely
+        state = const AuthState(
+          isAuthenticating: false,
+        ); // Reset state completely
       },
     );
   }
@@ -199,4 +210,3 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(isRegistered: false);
   }
 }
-

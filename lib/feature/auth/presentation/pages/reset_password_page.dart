@@ -10,7 +10,7 @@ import '../providers/reset_password_state.dart';
 class ResetPasswordPage extends ConsumerStatefulWidget {
   final String token;
 
-  const ResetPasswordPage({Key? key, required this.token}) : super(key: key);
+  const ResetPasswordPage({super.key, required this.token});
 
   @override
   ConsumerState<ResetPasswordPage> createState() => _ResetPasswordPageState();
@@ -60,11 +60,11 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage>
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     _animationController.forward();
 
@@ -128,16 +128,21 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage>
   @override
   Widget build(BuildContext context) {
     // Escuchar el estado para reaccionar a cambios importantes
-    ref.listen<ResetPasswordState>(resetPasswordControllerProvider,
-        (previous, next) {
-      if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
+    ref.listen<ResetPasswordState>(resetPasswordControllerProvider, (
+      previous,
+      next,
+    ) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
         _showErrorSnackBar(next.errorMessage!);
       }
       if (next.passwordChanged && !previous!.passwordChanged) {
         _showSuccessSnackBar('Contraseña cambiada con éxito.');
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
-            GoRouter.of(context).go('/login'); // Asegúrate de que esta ruta exista
+            GoRouter.of(
+              context,
+            ).go('/login'); // Asegúrate de que esta ruta exista
           }
         });
       }
@@ -197,7 +202,9 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage>
   }
 
   Widget _buildMainCard(
-      ResetPasswordState state, ResetPasswordController controller) {
+    ResetPasswordState state,
+    ResetPasswordController controller,
+  ) {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -269,7 +276,9 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage>
   }
 
   Widget _buildPasswordField(
-      ResetPasswordState state, ResetPasswordController controller) {
+    ResetPasswordState state,
+    ResetPasswordController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -325,7 +334,9 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage>
   }
 
   Widget _buildConfirmPasswordField(
-      ResetPasswordState state, ResetPasswordController controller) {
+    ResetPasswordState state,
+    ResetPasswordController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -383,7 +394,9 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage>
   }
 
   Widget _buildSubmitButton(
-      ResetPasswordState state, ResetPasswordController controller) {
+    ResetPasswordState state,
+    ResetPasswordController controller,
+  ) {
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -429,7 +442,9 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      state.passwordChanged ? Icons.check_circle : Icons.lock_open,
+                      state.passwordChanged
+                          ? Icons.check_circle
+                          : Icons.lock_open,
                       size: 20,
                       color: Colors.white,
                     ),

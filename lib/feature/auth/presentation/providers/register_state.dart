@@ -1,5 +1,4 @@
 // lib/feature/auth/presentation/providers/register_state.dart
-import 'package:flutter/material.dart';
 import 'package:equatable/equatable.dart';
 
 // Definir ApiaryData para el estado del formulario de registro
@@ -7,35 +6,46 @@ class RegisterApiaryData extends Equatable {
   final String name;
   final String address;
   final bool appliesTreatments;
+  final bool isLocationValid;
+  final bool locationValidationAttempted;
 
   const RegisterApiaryData({
     this.name = '',
     this.address = '',
     this.appliesTreatments = false,
+    this.isLocationValid = false,
+    this.locationValidationAttempted = false,
   });
 
   RegisterApiaryData copyWith({
     String? name,
     String? address,
     bool? appliesTreatments,
+    bool? isLocationValid,
+    bool? locationValidationAttempted,
   }) {
     return RegisterApiaryData(
       name: name ?? this.name,
       address: address ?? this.address,
       appliesTreatments: appliesTreatments ?? this.appliesTreatments,
+      isLocationValid: isLocationValid ?? this.isLocationValid,
+      locationValidationAttempted:
+          locationValidationAttempted ?? this.locationValidationAttempted,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      "name": name,
-      "location": address,
-      "treatments": appliesTreatments,
-    };
+    return {"name": name, "location": address, "treatments": appliesTreatments};
   }
 
   @override
-  List<Object?> get props => [name, address, appliesTreatments];
+  List<Object?> get props => [
+    name,
+    address,
+    appliesTreatments,
+    isLocationValid,
+    locationValidationAttempted,
+  ];
 }
 
 class RegisterState extends Equatable {
@@ -66,7 +76,9 @@ class RegisterState extends Equatable {
     this.phone = '',
     this.password = '',
     this.confirmPassword = '',
-    this.apiaries = const [RegisterApiaryData()], // Al menos un apiario por defecto
+    this.apiaries = const [
+      RegisterApiaryData(),
+    ], // Al menos un apiario por defecto
   });
 
   RegisterState copyWith({
@@ -86,7 +98,9 @@ class RegisterState extends Equatable {
   }) {
     return RegisterState(
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: clearErrorMessage ? null : errorMessage ?? this.errorMessage,
+      errorMessage: clearErrorMessage
+          ? null
+          : errorMessage ?? this.errorMessage,
       isRegistered: isRegistered ?? this.isRegistered,
       currentStep: currentStep ?? this.currentStep,
       isPasswordVisible: isPasswordVisible ?? this.isPasswordVisible,
@@ -102,17 +116,17 @@ class RegisterState extends Equatable {
 
   @override
   List<Object?> get props => [
-        isLoading,
-        errorMessage,
-        isRegistered,
-        currentStep,
-        isPasswordVisible,
-        showValidationErrors,
-        name,
-        email,
-        phone,
-        password,
-        confirmPassword,
-        apiaries,
-      ];
+    isLoading,
+    errorMessage,
+    isRegistered,
+    currentStep,
+    isPasswordVisible,
+    showValidationErrors,
+    name,
+    email,
+    phone,
+    password,
+    confirmPassword,
+    apiaries,
+  ];
 }

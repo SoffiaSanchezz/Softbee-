@@ -73,502 +73,352 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
     );
   }
 
-    Widget _buildModalContent(bool success, String message, String email) {
+  Widget _buildModalContent(bool success, String message, String email) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 350, maxHeight: 500),
 
-      return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
 
-        constraints: const BoxConstraints(maxWidth: 350, maxHeight: 500),
+      padding: const EdgeInsets.all(24),
 
-        margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
 
-        padding: const EdgeInsets.all(24),
+        borderRadius: BorderRadius.circular(20),
 
-        decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
 
-          color: Colors.white,
+            blurRadius: 20,
 
-          borderRadius: BorderRadius.circular(20),
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
 
-          boxShadow: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
 
-            BoxShadow(
+          children: [
+            // Icono animado
+            TweenAnimationBuilder(
+              tween: Tween<double>(begin: 0, end: 1),
 
-              color: Colors.black.withOpacity(0.15),
+              duration: const Duration(milliseconds: 600),
 
-              blurRadius: 20,
+              builder: (context, value, child) {
+                return Transform.scale(
+                  scale: value,
 
-              offset: const Offset(0, 10),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
 
-            ),
+                    decoration: BoxDecoration(
+                      color: success
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
 
-          ],
+                      shape: BoxShape.circle,
 
-        ),
-
-        child: SingleChildScrollView(
-
-          child: Column(
-
-            mainAxisSize: MainAxisSize.min,
-
-            children: [
-
-              // Icono animado
-
-              TweenAnimationBuilder(
-
-                tween: Tween<double>(begin: 0, end: 1),
-
-                duration: const Duration(milliseconds: 600),
-
-                builder: (context, value, child) {
-
-                  return Transform.scale(
-
-                    scale: value,
-
-                    child: Container(
-
-                      padding: const EdgeInsets.all(16),
-
-                      decoration: BoxDecoration(
-
-                        color: success
-
-                            ? Colors.green.withOpacity(0.1)
-
-                            : Colors.red.withOpacity(0.1),
-
-                        shape: BoxShape.circle,
-
-                        border: Border.all(
-
-                          color: success ? Colors.green : Colors.red,
-
-                          width: 3,
-
-                        ),
-
-                      ),
-
-                      child: Icon(
-
-                        success
-
-                            ? Icons.mark_email_read_rounded
-
-                            : Icons.error_outline_rounded,
-
-                        size: 40,
-
+                      border: Border.all(
                         color: success ? Colors.green : Colors.red,
 
+                        width: 3,
                       ),
-
                     ),
 
-                  );
+                    child: Icon(
+                      success
+                          ? Icons.mark_email_read_rounded
+                          : Icons.error_outline_rounded,
 
-                },
+                      size: 40,
 
+                      color: success ? Colors.green : Colors.red,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Título
+            Text(
+              success ? '¡Correo Enviado!' : 'Error al Enviar',
+
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+
+                fontWeight: FontWeight.bold,
+
+                color: textDark,
               ),
 
-  
+              textAlign: TextAlign.center,
+            ),
 
-              const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-  
-
-              // Título
-
+            // Contenido específico para éxito
+            if (success) ...[
               Text(
-
-                success ? '¡Correo Enviado!' : 'Error al Enviar',
+                'Enlace de recuperación enviado a:',
 
                 style: GoogleFonts.poppins(
+                  fontSize: 14,
 
-                  fontSize: 22,
-
-                  fontWeight: FontWeight.bold,
-
-                  color: textDark,
-
+                  color: textDark.withOpacity(0.7),
                 ),
 
                 textAlign: TextAlign.center,
-
               ),
 
-  
+              const SizedBox(height: 12),
 
-              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
 
-  
+                decoration: BoxDecoration(
+                  color: lightYellow,
 
-              // Contenido específico para éxito
+                  borderRadius: BorderRadius.circular(12),
 
-              if (success) ...[
+                  border: Border.all(color: primaryYellow.withOpacity(0.5)),
+                ),
 
-                Text(
-
-                  'Enlace de recuperación enviado a:',
+                child: Text(
+                  email,
 
                   style: GoogleFonts.poppins(
-
                     fontSize: 14,
 
-                    color: textDark.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
 
+                    color: darkYellow,
                   ),
 
                   textAlign: TextAlign.center,
+                ),
+              ),
 
+              const SizedBox(height: 16),
+
+              Container(
+                padding: const EdgeInsets.all(16),
+
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+
+                  borderRadius: BorderRadius.circular(12),
+
+                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
                 ),
 
-                const SizedBox(height: 12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
 
-                Container(
+                          color: Colors.blue.withOpacity(0.8),
 
-                  padding:
-
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-
-                  decoration: BoxDecoration(
-
-                    color: lightYellow,
-
-                    borderRadius: BorderRadius.circular(12),
-
-                    border: Border.all(color: primaryYellow.withOpacity(0.5)),
-
-                  ),
-
-                  child: Text(
-
-                    email,
-
-                    style: GoogleFonts.poppins(
-
-                      fontSize: 14,
-
-                      fontWeight: FontWeight.w600,
-
-                      color: darkYellow,
-
-                    ),
-
-                    textAlign: TextAlign.center,
-
-                  ),
-
-                ),
-
-                const SizedBox(height: 16),
-
-                Container(
-
-                  padding: const EdgeInsets.all(16),
-
-                  decoration: BoxDecoration(
-
-                    color: Colors.blue.withOpacity(0.1),
-
-                    borderRadius: BorderRadius.circular(12),
-
-                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
-
-                  ),
-
-                  child: Column(
-
-                    children: [
-
-                      Row(
-
-                        children: [
-
-                          Icon(
-
-                            Icons.info_outline,
-
-                            color: Colors.blue.withOpacity(0.8),
-
-                            size: 20,
-
-                          ),
-
-                          const SizedBox(width: 8),
-
-                          Expanded(
-
-                            child: Text(
-
-                              'Instrucciones importantes:',
-
-                              style: GoogleFonts.poppins(
-
-                                fontSize: 13,
-
-                                fontWeight: FontWeight.w600,
-
-                                color: Colors.blue.withOpacity(0.8),
-
-                              ),
-
-                            ),
-
-                          ),
-
-                        ],
-
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      Text(
-
-                        '• Revisa tu bandeja de entrada y spam\n• El enlace expira en 24 horas\n• Solo puedes solicitar un nuevo enlace cada minuto',
-
-                        style: GoogleFonts.poppins(
-
-                          fontSize: 12,
-
-                          color: Colors.blue.withOpacity(0.7),
-
-                          height: 1.4,
-
+                          size: 20,
                         ),
 
-                      ),
+                        const SizedBox(width: 8),
 
-                    ],
+                        Expanded(
+                          child: Text(
+                            'Instrucciones importantes:',
 
-                  ),
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
 
-                ),
+                              fontWeight: FontWeight.w600,
 
-              ] else ...[
-
-                // Contenido para error
-
-                Container(
-
-                  padding: const EdgeInsets.all(16),
-
-                  decoration: BoxDecoration(
-
-                    color: Colors.red.withOpacity(0.1),
-
-                    borderRadius: BorderRadius.circular(12),
-
-                    border: Border.all(color: Colors.red.withOpacity(0.3)),
-
-                  ),
-
-                  child: Text(
-
-                    message,
-
-                    style: GoogleFonts.poppins(
-
-                      fontSize: 14,
-
-                      color: Colors.red.withOpacity(0.8),
-
-                      height: 1.3,
-
+                              color: Colors.blue.withOpacity(0.8),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
 
-                    textAlign: TextAlign.center,
+                    const SizedBox(height: 8),
 
-                  ),
-
-                ),
-
-              ],
-
-  
-
-              const SizedBox(height: 24),
-
-  
-
-              // Botones
-
-              if (success) ...[
-
-                // Botón principal para éxito
-
-                SizedBox(
-
-                  width: double.infinity,
-
-                  child: ElevatedButton(
-
-                    onPressed: () {
-
-                      Navigator.of(context).pop(); // Cerrar modal
-
-                      Navigator.of(context).pop(); // Volver a login
-
-                    },
-
-                    style: ElevatedButton.styleFrom(
-
-                      backgroundColor: Colors.green,
-
-                      foregroundColor: Colors.white,
-
-                      shape: RoundedRectangleBorder(
-
-                        borderRadius: BorderRadius.circular(12),
-
-                      ),
-
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-
-                      elevation: 2,
-
-                    ),
-
-                    child: Text(
-
-                      'Entendido',
+                    Text(
+                      '• Revisa tu bandeja de entrada y spam\n• El enlace expira en 24 horas\n• Solo puedes solicitar un nuevo enlace cada minuto',
 
                       style: GoogleFonts.poppins(
+                        fontSize: 12,
 
-                        fontWeight: FontWeight.w600,
+                        color: Colors.blue.withOpacity(0.7),
 
-                        fontSize: 16,
-
+                        height: 1.4,
                       ),
-
                     ),
+                  ],
+                ),
+              ),
+            ] else ...[
+              // Contenido para error
+              Container(
+                padding: const EdgeInsets.all(16),
 
-                  ),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
 
+                  borderRadius: BorderRadius.circular(12),
+
+                  border: Border.all(color: Colors.red.withOpacity(0.3)),
                 ),
 
-                const SizedBox(height: 12),
+                child: Text(
+                  message,
 
-                // Botón secundario para reenviar
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
 
-                TextButton(
+                    color: Colors.red.withOpacity(0.8),
 
-                  onPressed: () {
-
-                    Navigator.of(context).pop();
-
-                    // Esperar un momento antes de permitir reenvío
-
-                    Future.delayed(const Duration(seconds: 1), () {
-
-                      if (mounted) {
-
-                        ref
-
-                            .read(forgotPasswordControllerProvider.notifier)
-
-                            .resetPassword();
-
-                      }
-
-                    });
-
-                  },
-
-                  style: TextButton.styleFrom(
-
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-
+                    height: 1.3,
                   ),
 
-                  child: Text(
-
-                    'Reenviar correo',
-
-                    style: GoogleFonts.poppins(
-
-                      color: darkYellow,
-
-                      fontWeight: FontWeight.w500,
-
-                      fontSize: 14,
-
-                    ),
-
-                  ),
-
+                  textAlign: TextAlign.center,
                 ),
-
-              ] else ...[
-
-                // Botones para error
-
-                SizedBox(
-
-                  width: double.infinity,
-
-                  child: ElevatedButton(
-
-                    onPressed: () {
-
-                      Navigator.of(context).pop();
-
-                    },
-
-                    style: ElevatedButton.styleFrom(
-
-                      backgroundColor: primaryYellow,
-
-                      foregroundColor: Colors.white,
-
-                      shape: RoundedRectangleBorder(
-
-                        borderRadius: BorderRadius.circular(12),
-
-                      ),
-
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-
-                      elevation: 2,
-
-                    ),
-
-                    child: Text(
-
-                      'Reintentar',
-
-                      style: GoogleFonts.poppins(
-
-                        fontWeight: FontWeight.w600,
-
-                        fontSize: 16,
-
-                      ),
-
-                    ),
-
-                  ),
-
-                ),
-
-              ],
-
+              ),
             ],
 
-          ),
+            const SizedBox(height: 24),
 
+            // Botones
+            if (success) ...[
+              // Botón principal para éxito
+              SizedBox(
+                width: double.infinity,
+
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Cerrar modal
+
+                    Navigator.of(context).pop(); // Volver a login
+                  },
+
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+
+                    foregroundColor: Colors.white,
+
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+
+                    elevation: 2,
+                  ),
+
+                  child: Text(
+                    'Entendido',
+
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Botón secundario para reenviar
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+
+                  // Esperar un momento antes de permitir reenvío
+
+                  Future.delayed(const Duration(seconds: 1), () {
+                    if (mounted) {
+                      ref
+                          .read(forgotPasswordControllerProvider.notifier)
+                          .resetPassword();
+                    }
+                  });
+                },
+
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+
+                child: Text(
+                  'Reenviar correo',
+
+                  style: GoogleFonts.poppins(
+                    color: darkYellow,
+
+                    fontWeight: FontWeight.w500,
+
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ] else ...[
+              // Botones para error
+              SizedBox(
+                width: double.infinity,
+
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryYellow,
+
+                    foregroundColor: Colors.white,
+
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+
+                    elevation: 2,
+                  ),
+
+                  child: Text(
+                    'Reintentar',
+
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
-
-      );
-
-    }
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     // Escuchar cambios de estado para mostrar el diálogo
-    ref.listen<ForgotPasswordState>(forgotPasswordControllerProvider, (previous, next) {
+    ref.listen<ForgotPasswordState>(forgotPasswordControllerProvider, (
+      previous,
+      next,
+    ) {
       if (next.emailSent || next.errorMessage != null) {
         _showResultModal(
           success: next.emailSent,
@@ -602,13 +452,13 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
                 child: isDesktop
                     ? _buildDesktopLayout(context, width, height)
                     : (isLandscape && isSmallScreen
-                        ? _buildLandscapeLayout(context, width, height)
-                        : _buildPortraitLayout(
-                            context,
-                            width,
-                            height,
-                            isSmallScreen,
-                          )),
+                          ? _buildLandscapeLayout(context, width, height)
+                          : _buildPortraitLayout(
+                              context,
+                              width,
+                              height,
+                              isSmallScreen,
+                            )),
               ),
             ),
           );
@@ -773,7 +623,9 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
                   icon: Icon(Icons.arrow_back, color: darkYellow),
                   onPressed: () {
                     // Limpiar el estado al volver atrás
-                    ref.read(forgotPasswordControllerProvider.notifier).resetState();
+                    ref
+                        .read(forgotPasswordControllerProvider.notifier)
+                        .resetState();
                     Navigator.pop(context);
                   },
                 ),
@@ -886,7 +738,9 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
                 child: IconButton(
                   icon: Icon(Icons.arrow_back, color: darkYellow),
                   onPressed: () {
-                    ref.read(forgotPasswordControllerProvider.notifier).resetState();
+                    ref
+                        .read(forgotPasswordControllerProvider.notifier)
+                        .resetState();
                     Navigator.pop(context);
                   },
                 ),
@@ -1024,9 +878,10 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
               keyboardType: TextInputType.emailAddress,
               // La validación ahora se maneja en el controlador
               validator: (value) =>
-                  state.errorMessage != null && state.errorMessage!.contains('válido')
-                      ? state.errorMessage
-                      : null,
+                  state.errorMessage != null &&
+                      state.errorMessage!.contains('válido')
+                  ? state.errorMessage
+                  : null,
             ),
             SizedBox(height: verticalSpacing * 1.5),
             SizedBox(
