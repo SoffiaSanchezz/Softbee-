@@ -1,9 +1,11 @@
+import 'package:intl/intl.dart';
+
 class Apiary {
   final String id;
   final String userId;
   final String name;
   final String? location;
-  final int beehivesCount;
+  final int? beehivesCount;
   final bool treatments;
   final DateTime? createdAt;
 
@@ -12,7 +14,7 @@ class Apiary {
     required this.userId,
     required this.name,
     this.location,
-    required this.beehivesCount,
+    this.beehivesCount,
     required this.treatments,
     this.createdAt,
   });
@@ -23,10 +25,10 @@ class Apiary {
       userId: json['user_id'],
       name: json['name'],
       location: json['location'],
-      beehivesCount: json['beehives_count'] ?? 0,
+      beehivesCount: json['beehives_count'],
       treatments: json['treatments'] ?? false,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parse(json['created_at'])
           : null,
     );
   }
@@ -63,4 +65,3 @@ class Apiary {
     );
   }
 }
-
