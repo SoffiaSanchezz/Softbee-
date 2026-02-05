@@ -1338,10 +1338,7 @@ class _ApiaryCardState extends ConsumerState<ApiaryCard> {
                       widget.showValidationErrors &&
                           widget.apiary.address.isEmpty
                       ? 'La dirección es requerida'
-                      : (widget.showValidationErrors &&
-                                widget.apiary.address.length < 10
-                            ? 'La dirección es muy corta'
-                            : null),
+                      : null,
                   onChanged: (value) {
                     /* Handled by listener */
                   },
