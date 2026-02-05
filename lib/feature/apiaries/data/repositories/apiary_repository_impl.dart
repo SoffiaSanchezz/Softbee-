@@ -29,13 +29,26 @@ class ApiaryRepositoryImpl implements ApiaryRepository {
   }
 
   @override
-  Future<Either<Failure, Apiary>> createApiary(String userId, String name, String? location, int beehivesCount, bool treatments) async {
+  Future<Either<Failure, Apiary>> createApiary(
+    String userId,
+    String name,
+    String? location,
+    int? beehivesCount,
+    bool treatments,
+  ) async {
     try {
       final token = await localDataSource.getToken();
       if (token == null) {
         return const Left(AuthFailure('No authentication token found.'));
       }
-      final result = await remoteDataSource.createApiary(token, userId, name, location, beehivesCount, treatments);
+      final result = await remoteDataSource.createApiary(
+        token,
+        userId,
+        name,
+        location,
+        beehivesCount,
+        treatments,
+      );
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -43,13 +56,28 @@ class ApiaryRepositoryImpl implements ApiaryRepository {
   }
 
   @override
-  Future<Either<Failure, Apiary>> updateApiary(String apiaryId, String userId, String? name, String? location, int? beehivesCount, bool? treatments) async {
+  Future<Either<Failure, Apiary>> updateApiary(
+    String apiaryId,
+    String userId,
+    String? name,
+    String? location,
+    int? beehivesCount,
+    bool? treatments,
+  ) async {
     try {
       final token = await localDataSource.getToken();
       if (token == null) {
         return const Left(AuthFailure('No authentication token found.'));
       }
-      final result = await remoteDataSource.updateApiary(token, apiaryId, userId, name, location, beehivesCount, treatments);
+      final result = await remoteDataSource.updateApiary(
+        token,
+        apiaryId,
+        userId,
+        name,
+        location,
+        beehivesCount,
+        treatments,
+      );
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -57,7 +85,10 @@ class ApiaryRepositoryImpl implements ApiaryRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteApiary(String apiaryId, String userId) async {
+  Future<Either<Failure, void>> deleteApiary(
+    String apiaryId,
+    String userId,
+  ) async {
     try {
       final token = await localDataSource.getToken();
       if (token == null) {
