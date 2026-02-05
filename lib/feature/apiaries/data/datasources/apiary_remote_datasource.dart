@@ -4,8 +4,23 @@ import 'package:dio/dio.dart';
 
 abstract class ApiaryRemoteDataSource {
   Future<List<Apiary>> getApiaries(String token);
-  Future<Apiary> createApiary(String token, String userId, String name, String? location, int beehivesCount, bool treatments);
-  Future<Apiary> updateApiary(String token, String apiaryId, String userId, String? name, String? location, int? beehivesCount, bool? treatments);
+  Future<Apiary> createApiary(
+    String token,
+    String userId,
+    String name,
+    String? location,
+    int? beehivesCount,
+    bool treatments,
+  );
+  Future<Apiary> updateApiary(
+    String token,
+    String apiaryId,
+    String userId,
+    String? name,
+    String? location,
+    int? beehivesCount,
+    bool? treatments,
+  );
   Future<void> deleteApiary(String token, String apiaryId, String userId);
 }
 
@@ -46,7 +61,14 @@ class ApiaryRemoteDataSourceImpl implements ApiaryRemoteDataSource {
   }
 
   @override
-  Future<Apiary> createApiary(String token, String userId, String name, String? location, int beehivesCount, bool treatments) async {
+  Future<Apiary> createApiary(
+    String token,
+    String userId,
+    String name,
+    String? location,
+    int? beehivesCount,
+    bool treatments,
+  ) async {
     try {
       final response = await httpClient.post(
         '/api/v1/apiaries',
@@ -63,9 +85,7 @@ class ApiaryRemoteDataSourceImpl implements ApiaryRemoteDataSource {
       if (response.statusCode == 201) {
         return Apiary.fromJson(response.data);
       } else {
-        throw Exception(
-          response.data['message'] ?? 'Error al crear apiario',
-        );
+        throw Exception(response.data['message'] ?? 'Error al crear apiario');
       }
     } on DioException catch (e) {
       if (e.response != null) {
@@ -82,7 +102,15 @@ class ApiaryRemoteDataSourceImpl implements ApiaryRemoteDataSource {
   }
 
   @override
-  Future<Apiary> updateApiary(String token, String apiaryId, String userId, String? name, String? location, int? beehivesCount, bool? treatments) async {
+  Future<Apiary> updateApiary(
+    String token,
+    String apiaryId,
+    String userId,
+    String? name,
+    String? location,
+    int? beehivesCount,
+    bool? treatments,
+  ) async {
     try {
       final response = await httpClient.put(
         '/api/v1/apiaries/$apiaryId',
@@ -118,7 +146,11 @@ class ApiaryRemoteDataSourceImpl implements ApiaryRemoteDataSource {
   }
 
   @override
-  Future<void> deleteApiary(String token, String apiaryId, String userId) async {
+  Future<void> deleteApiary(
+    String token,
+    String apiaryId,
+    String userId,
+  ) async {
     try {
       final response = await httpClient.delete(
         '/api/v1/apiaries/$apiaryId',
