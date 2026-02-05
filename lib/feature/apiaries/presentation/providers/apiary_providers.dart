@@ -58,4 +58,3 @@ final apiariesControllerProvider =
         authController: authController,
       );
     });
-
