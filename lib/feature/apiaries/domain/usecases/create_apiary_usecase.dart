@@ -8,14 +8,14 @@ class CreateApiaryParams {
   final String userId;
   final String name;
   final String? location;
-  final int beehivesCount;
+  final int? beehivesCount;
   final bool treatments;
 
   CreateApiaryParams({
     required this.userId,
     required this.name,
     this.location,
-    required this.beehivesCount,
+    this.beehivesCount,
     required this.treatments,
   });
 }

@@ -7,10 +7,7 @@ class DeleteApiaryParams {
   final String apiaryId;
   final String userId; // Add userId for authorization check
 
-  DeleteApiaryParams({
-    required this.apiaryId,
-    required this.userId,
-  });
+  DeleteApiaryParams({required this.apiaryId, required this.userId});
 }
 
 class DeleteApiaryUseCase implements UseCase<void, DeleteApiaryParams> {
