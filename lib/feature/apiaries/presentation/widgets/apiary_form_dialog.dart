@@ -18,7 +18,6 @@ class _ApiaryFormDialogState extends ConsumerState<ApiaryFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _locationController;
-  late TextEditingController _beehivesCountController;
   bool _treatments = false;
   bool _isLocationValid = false;
   bool _locationValidationAttempted = false;
@@ -28,20 +27,27 @@ class _ApiaryFormDialogState extends ConsumerState<ApiaryFormDialog> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.apiaryToEdit?.name ?? '');
-    _locationController = TextEditingController(text: widget.apiaryToEdit?.location ?? '');
-    _beehivesCountController = TextEditingController(
-        text: widget.apiaryToEdit?.beehivesCount.toString() ?? '0');
+    _nameController = TextEditingController(
+      text: widget.apiaryToEdit?.name ?? '',
+    );
+    _locationController = TextEditingController(
+      text: widget.apiaryToEdit?.location ?? '',
+    );
     _treatments = widget.apiaryToEdit?.treatments ?? false;
 
-    if (widget.apiaryToEdit?.location != null && widget.apiaryToEdit!.location!.isNotEmpty) {
-      _isLocationValid = true; // Assume valid if editing an existing apiary with a location
+    if (widget.apiaryToEdit?.location != null &&
+        widget.apiaryToEdit!.location!.isNotEmpty) {
+      _isLocationValid =
+          true; // Assume valid if editing an existing apiary with a location
     }
 
     _locationController.addListener(() {
       setState(() {
-        _isLocationValid = false; // Reset validation on change
-        _locationValidationAttempted = false;
+        _isLocationValid = _locationController.text
+            .trim()
+            .isNotEmpty; // Valid if not empty
+        _locationValidationAttempted =
+            true; // Mark as attempted for visual feedback
       });
     });
   }
@@ -50,47 +56,26 @@ class _ApiaryFormDialogState extends ConsumerState<ApiaryFormDialog> {
   void dispose() {
     _nameController.dispose();
     _locationController.dispose();
-    _beehivesCountController.dispose();
     super.dispose();
   }
 
-  Future<void> _validateLocation() async {
-    setState(() {
-      _locationValidationAttempted = true;
-    });
-    if (_locationController.text.trim().isEmpty) {
-      setState(() {
-        _isLocationValid = false;
-      });
-      return;
-    }
-    final isValid = await _geocodingService.validateAddress(_locationController.text);
-    setState(() {
-      _isLocationValid = isValid;
-    });
-  }
-
   Future<void> _submitForm() async {
+    // Validate form fields (name)
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    if (!_isLocationValid && _locationController.text.trim().isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, valida la ubicación o déjala vacía.')),
-      );
-      return;
-    }
-
     _formKey.currentState!.save();
 
     final apiariesController = ref.read(apiariesControllerProvider.notifier);
+    final locationText = _locationController.text.trim();
 
+    // Determine if creating or updating
     if (widget.apiaryToEdit == null) {
       // Create new apiary
       await apiariesController.createApiary(
         _nameController.text.trim(),
-        _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
-        int.parse(_beehivesCountController.text),
+        locationText.isEmpty ? null : locationText,
+        0, // Default to 0 beehives for new apiaries
         _treatments,
       );
     } else {
@@ -98,20 +83,22 @@ class _ApiaryFormDialogState extends ConsumerState<ApiaryFormDialog> {
       await apiariesController.updateApiary(
         widget.apiaryToEdit!.id,
         _nameController.text.trim(),
-        _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
-        int.parse(_beehivesCountController.text),
+        locationText.isEmpty ? null : locationText,
+        widget.apiaryToEdit!.beehivesCount, // Preserve existing count on edit
         _treatments,
       );
     }
 
-    // Check state and close dialog if successful
-    final apiariesState = ref.read(apiariesControllerProvider);
-    if (!apiariesState.isCreating && !apiariesState.isUpdating) {
-      if (apiariesState.errorCreating == null && apiariesState.errorUpdating == null) {
-        if (!mounted) return;
-        Navigator.of(context).pop();
-      }
+    // After async operation, check if the widget is still in the tree
+    if (!mounted) return;
+
+    // Read the latest state to check for errors
+    final latestState = ref.read(apiariesControllerProvider);
+    if (latestState.errorCreating == null &&
+        latestState.errorUpdating == null) {
+      Navigator.of(context).pop();
     }
+    // Error snackbar is already handled by a listener in ApiariesMenu
   }
 
   @override
@@ -134,13 +121,21 @@ class _ApiaryFormDialogState extends ConsumerState<ApiaryFormDialog> {
         ),
         child: Column(
           children: [
-            Icon(isEditing ? Icons.edit_note_rounded : Icons.add_circle_outline_rounded,
-                color: Colors.amber.shade700, size: 36),
+            Icon(
+              isEditing
+                  ? Icons.edit_note_rounded
+                  : Icons.add_circle_outline_rounded,
+              color: Colors.amber.shade700,
+              size: 36,
+            ),
             const SizedBox(height: 10),
             Text(
               isEditing ? 'Editar Apiario' : 'Crear Nuevo Apiario',
               style: GoogleFonts.poppins(
-                  fontSize: 22, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.amber.shade900,
+              ),
             ),
           ],
         ),
@@ -158,13 +153,15 @@ class _ApiaryFormDialogState extends ConsumerState<ApiaryFormDialog> {
                   labelText: 'Nombre del Apiario',
                   hintText: 'Ej: Apiario El Prado',
                   prefixIcon: const Icon(Icons.hive_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Por favor, introduce el nombre del apiario';
                   }
-                  if (value.length < 3) {
+                  if (value.trim().length < 3) {
                     return 'El nombre debe tener al menos 3 caracteres';
                   }
                   return null;
@@ -175,99 +172,114 @@ class _ApiaryFormDialogState extends ConsumerState<ApiaryFormDialog> {
               TextFormField(
                 controller: _locationController,
                 decoration: InputDecoration(
-                  labelText: 'Ubicación (opcional)',
+                  labelText: 'Ubicación',
                   hintText: 'Ej: Vereda La Esperanza, Cota',
                   prefixIcon: const Icon(Icons.location_on_outlined),
-                  suffixIcon: _locationController.text.isNotEmpty
-                      ? (isLoading
-                          ? const CircularProgressIndicator()
-                          : IconButton(
-                              icon: Icon(
-                                _isLocationValid ? Icons.check_circle_outline : Icons.warning_amber_rounded,
-                                color: _isLocationValid ? Colors.green : Colors.amber,
-                              ),
-                              onPressed: _validateLocation,
-                            ))
+                  suffixIcon: _locationController.text.trim().isNotEmpty
+                      ? const Icon(
+                          Icons
+                              .check_circle_outline, // Always show checkmark if not empty
+                          color: Colors.green,
+                        )
                       : null,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  errorText: _locationValidationAttempted && !_isLocationValid && _locationController.text.isNotEmpty
-                      ? 'Ubicación no válida o demasiado genérica. Por favor, sé más específico o déjala vacía.'
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  errorText:
+                      (_locationValidationAttempted &&
+                          !_isLocationValid &&
+                          _locationController.text.trim().isNotEmpty)
+                      ? 'No se pudo verificar la ubicación, pero se guardará.'
                       : null,
+                  errorStyle: TextStyle(color: Colors.orange.shade800),
                 ),
                 onSaved: (value) => _locationController.text = value!,
-              ),
-              const SizedBox(height: 15),
-              TextFormField(
-                controller: _beehivesCountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Número de Colmenas',
-                  hintText: 'Ej: 10',
-                  prefixIcon: const Icon(Icons.grid_view_rounded),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, introduce el número de colmenas';
-                  }
-                  if (int.tryParse(value) == null || int.parse(value) < 0) {
-                    return 'Por favor, introduce un número válido';
-                  }
+                  // La ubicación es ahora opcional, por lo que no es necesaria una validación para valores vacíos aquí.
+                  // El backend maneja cadenas vacías/nulas para la ubicación.
                   return null;
                 },
-                onSaved: (value) => _beehivesCountController.text = value!,
               ),
               const SizedBox(height: 15),
               SwitchListTile(
-                title: Text('Aplicar Tratamientos', style: GoogleFonts.poppins()),
-                subtitle: Text('¿Aplicas tratamientos cuando las abejas están enfermas?',
-                    style: GoogleFonts.poppins(fontSize: 12)),
+                title: Text(
+                  'Aplicar Tratamientos',
+                  style: GoogleFonts.poppins(),
+                ),
+                subtitle: Text(
+                  '¿Aplicas tratamientos cuando las abejas están enfermas?',
+                  style: GoogleFonts.poppins(fontSize: 12),
+                ),
                 value: _treatments,
                 onChanged: (bool value) {
                   setState(() {
                     _treatments = value;
                   });
                 },
-                activeColor: Colors.amber,
+                activeThumbColor: Colors.amber,
                 tileColor: Colors.grey.shade50,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               const SizedBox(height: 20),
-              if (apiariesState.errorCreating != null || apiariesState.errorUpdating != null)
+              if (apiariesState.errorCreating != null ||
+                  apiariesState.errorUpdating != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
-                    apiariesState.errorCreating ?? apiariesState.errorUpdating ?? 'Error desconocido',
+                    apiariesState.errorCreating ??
+                        apiariesState.errorUpdating ??
+                        'Error desconocido',
                     style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
                 ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 10,
+                runSpacing: 10,
                 children: [
                   TextButton(
-                    onPressed: isLoading ? null : () => Navigator.of(context).pop(),
-                    child: Text('Cancelar',
-                        style: GoogleFonts.poppins(color: Colors.grey.shade700)),
+                    onPressed: isLoading
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    child: Text(
+                      'Cancelar',
+                      style: GoogleFonts.poppins(color: Colors.grey.shade700),
+                    ),
                   ),
-                  const SizedBox(width: 10),
                   ElevatedButton.icon(
                     onPressed: isLoading ? null : _submitForm,
                     icon: isLoading
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
-                        : Icon(isEditing ? Icons.save_rounded : Icons.add_rounded, color: Colors.white),
+                        : Icon(
+                            isEditing ? Icons.save_rounded : Icons.add_rounded,
+                            color: Colors.white,
+                          ),
                     label: Text(
                       isEditing ? 'Guardar Cambios' : 'Crear Apiario',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber.shade700,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ],
