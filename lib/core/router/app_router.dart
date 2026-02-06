@@ -62,9 +62,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       // Rutas específicas del apiario
       GoRoute(
+        name: AppRoutes.apiaryDashboardRoute,
         path: AppRoutes.apiaryDashboardRoute,
         builder: (context, state) {
-          final apiaryId = state.pathParameters['apiaryId']!;
+          final apiaryId = state.pathParameters['apiaryId'] as String;
           final apiaryName = state.uri.queryParameters['apiaryName'];
           final apiaryLocation = state.uri.queryParameters['apiaryLocation'];
 
@@ -79,7 +80,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'monitoring',
             name: AppRoutes.monitoringRoute, // Usar nombre para la ruta
             builder: (context, state) {
-              final apiaryId = state.pathParameters['apiaryId']!;
+              final apiaryId = state.pathParameters['apiaryId'] as String;
               return MonitoringPage(apiaryId: apiaryId);
             },
           ),
@@ -87,7 +88,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'inventory',
             name: AppRoutes.inventoryRoute,
             builder: (context, state) {
-              final apiaryId = state.pathParameters['apiaryId']!;
+              final apiaryId = state.pathParameters['apiaryId'] as String;
               return InventoryPage(apiaryId: apiaryId);
             },
           ),
@@ -95,7 +96,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'reports',
             name: AppRoutes.reportsRoute,
             builder: (context, state) {
-              final apiaryId = state.pathParameters['apiaryId']!;
+              final apiaryId = state.pathParameters['apiaryId'] as String;
               return ReportsPage(apiaryId: apiaryId);
             },
           ),
@@ -103,7 +104,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'history',
             name: AppRoutes.historyRoute,
             builder: (context, state) {
-              final apiaryId = state.pathParameters['apiaryId']!;
+              final apiaryId = state.pathParameters['apiaryId'] as String;
               return HistoryPage(apiaryId: apiaryId);
             },
           ),
@@ -111,7 +112,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'hives',
             name: AppRoutes.hivesRoute,
             builder: (context, state) {
-              final apiaryId = state.pathParameters['apiaryId']!;
+              final apiaryId = state.pathParameters['apiaryId'] as String;
               return HivesPage(apiaryId: apiaryId);
             },
           ),
@@ -119,7 +120,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'settings',
             name: AppRoutes.apiarySettingsRoute,
             builder: (context, state) {
-              final apiaryId = state.pathParameters['apiaryId']!;
+              final apiaryId = state.pathParameters['apiaryId'] as String;
               return ApiarySettingsPage(apiaryId: apiaryId);
             },
           ),
@@ -131,6 +132,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isLoggedIn = authState.isAuthenticated;
       final isAuthRoute =
           state.matchedLocation == AppRoutes.loginRoute ||
+          state.matchedLocation == AppRoutes.registerRoute ||
+          state.matchedLocation == '/forgot-password' ||
           state.matchedLocation.startsWith(
             AppRoutes.resetPasswordRoute.split(':')[0],
           );

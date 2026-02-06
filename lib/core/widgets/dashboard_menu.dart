@@ -1,4 +1,6 @@
+import 'package:Softbee/feature/apiaries/presentation/providers/apiary_providers.dart';
 import 'package:Softbee/feature/apiaries/presentation/widgets/apiaries_menu.dart';
+import 'package:Softbee/feature/apiaries/presentation/widgets/apiary_form_dialog.dart';
 import 'package:Softbee/feature/auth/presentation/widgets/user_profile_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,12 +30,12 @@ class MenuScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFC107).withOpacity(0.15),
+                color: const Color.fromARGB(255, 79, 70, 1).withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Image.asset(
-                'assets/images/softbee_logo.png', // Reemplaza con tu asset
-                width: isSmallScreen ? 28 : 32,
+                'assets/images/Logo.png', // Reemplaza con tu asset
+                width: isSmallScreen ? 32 : 34,
                 height: isSmallScreen ? 28 : 32,
                 // Si no tienes el asset, usa un icono:
                 errorBuilder: (context, error, stackTrace) => Icon(
@@ -83,16 +85,13 @@ class MenuScreen extends ConsumerWidget {
       // FAB para crear nuevo apiario (responsive)
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // TODO: Navegar a crear apiario
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Crear nuevo apiario'),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
+          showDialog(
+            context: context,
+            builder: (context) => const ApiaryFormDialog(),
+          ).then((_) {
+            // Refresh apiaries after dialog is closed
+            ref.read(apiariesControllerProvider.notifier).fetchApiaries();
+          });
         },
         backgroundColor: const Color(0xFFFFC107),
         foregroundColor: const Color(0xFF1A1A1A),

@@ -144,6 +144,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  Future<void> logout() async {
+    await localDataSource.deleteToken();
+    await localDataSource.deleteUser();
+  }
+
+  @override
+  Future<User> getUserFromToken(String token) async {
+    final user = await localDataSource.getUser();
+    if (user != null) {
+      return user;
+    } else {
+      throw Exception('No se encontró información de usuario local.');
+    }
+  }
+
+  @override
   Future<void> createApiary(
     String userId,
     String apiaryName,
@@ -158,7 +174,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {
           'user_id': userId,
           'name': apiaryName,
-          'location': location,
+          'location': location.isEmpty ? null : location, // Send null if empty
           'treatments': treatments,
           'beehives_count': beehivesCount,
         },
@@ -175,22 +191,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } catch (e) {
       throw Exception('Error inesperado al crear apiario: $e');
-    }
-  }
-
-  @override
-  Future<void> logout() async {
-    await localDataSource.deleteToken();
-    await localDataSource.deleteUser();
-  }
-
-  @override
-  Future<User> getUserFromToken(String token) async {
-    final user = await localDataSource.getUser();
-    if (user != null) {
-      return user;
-    } else {
-      throw Exception('No se encontró información de usuario local.');
     }
   }
 

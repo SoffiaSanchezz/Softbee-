@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/repositories/auth_repository.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import 'package:Softbee/core/network/dio_client.dart'; // Importar dio_client.dart
+import 'package:Softbee/core/services/geocoding_service.dart'; // Importar GeocodingService
 import '../../core/usecase/check_auth_status_usecase.dart';
 import '../../core/usecase/get_user_from_token_usecase.dart';
 import '../../core/usecase/login_usecase.dart';
@@ -63,6 +64,10 @@ final createApiaryUseCaseProvider = Provider<CreateApiaryUseCase>((ref) {
   return CreateApiaryUseCase(ref.read(authRepositoryProvider));
 });
 
+final geocodingServiceProvider = Provider<GeocodingService>((ref) {
+  return GeocodingService();
+});
+
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
   (ref) {
     return AuthController(
@@ -73,6 +78,7 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
       registerUseCase: ref.read(
         registerUseCaseProvider,
       ), // Inyectar RegisterUseCase
+      createApiaryUseCase: ref.read(createApiaryUseCaseProvider),
     );
   },
 );
@@ -90,10 +96,12 @@ final registerControllerProvider =
       final authController = ref.watch(authControllerProvider.notifier);
       final registerUseCase = ref.read(registerUseCaseProvider);
       final createApiaryUseCase = ref.read(createApiaryUseCaseProvider);
+      final geocodingService = ref.read(geocodingServiceProvider);
       return RegisterController(
         authController,
         registerUseCase,
         createApiaryUseCase,
+        geocodingService,
       );
     });
 
