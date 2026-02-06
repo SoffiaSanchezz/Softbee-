@@ -28,7 +28,9 @@ class Apiary {
       beehivesCount: json['beehives_count'],
       treatments: json['treatments'] ?? false,
       createdAt: json['created_at'] != null
-          ? DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parse(json['created_at'])
+          ? DateFormat(
+              "EEE, dd MMM yyyy HH:mm:ss 'GMT'",
+            ).parse(json['created_at'])
           : null,
     );
   }
