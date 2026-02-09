@@ -1,6 +1,6 @@
 import 'package:Softbee/feature/beehive/presentation/pages/beehive_management_page.dart';
 import 'package:Softbee/core/widgets/menu_info_apiario.dart';
-import 'package:Softbee/feature/monitoring/presentation/pages/monitoring_overview_page.dart'; // New import
+import 'package:Softbee/feature/monitoring/presentation/pages/monitoring_overview_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -12,12 +12,9 @@ import '../pages/not_found_page.dart';
 import '../pages/landing_page.dart';
 import '../../feature/auth/presentation/pages/user_management_page.dart';
 
-// import '../../feature/apiaries/presentation/widgets/apiary_dashboard_menu.dart';
-// import '../../feature/apiaries/presentation/pages/monitoring_page.dart';
-import '../../feature/apiaries/presentation/pages/inventory_page.dart';
+import '../../feature/inventory/presentation/pages/inventory_management_page.dart'; // NEW INVENTORY PAGE
 import '../../feature/apiaries/presentation/pages/reports_page.dart';
 import '../../feature/apiaries/presentation/pages/history_page.dart';
-// import '../../feature/apiaries/presentation/pages/hives_page.dart'; // This page will now be beehive_management_page
 import '../../feature/apiaries/presentation/pages/apiary_settings_page.dart';
 import '../widgets/dashboard_menu.dart';
 
@@ -114,8 +111,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'inventory',
             name: AppRoutes.inventoryRoute,
             builder: (context, state) {
-              final apiaryId = state.pathParameters['apiaryId'] as String;
-              return InventoryPage(apiaryId: apiaryId);
+              final apiaryId = state.pathParameters['apiaryId'] as String; // Changed back to String
+              return InventoryManagementPage(
+                apiaryId: apiaryId,
+              ); // Use new page
             },
           ),
           GoRoute(
@@ -134,15 +133,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return HistoryPage(apiaryId: apiaryId);
             },
           ),
-          // Remove the old hivesRoute as it's now nested under monitoring
-          // GoRoute(
-          //   path: 'hives',
-          //   name: AppRoutes.hivesRoute,
-          //   builder: (context, state) {
-          //     final apiaryId = state.pathParameters['apiaryId'] as String;
-          //     return HivesPage(apiaryId: apiaryId);
-          //   },
-          // ),
           GoRoute(
             path: 'settings',
             name: AppRoutes.apiarySettingsRoute,
