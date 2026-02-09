@@ -111,7 +111,7 @@ final inventoryControllerProvider =
     ) {
       final repository = ref.read(inventoryRepositoryProvider);
       final controller = InventoryController(repository);
-      // controller.loadInventoryItems(apiaryId: apiaryId); // Load items immediately
+      controller.loadInventoryItems(apiaryId: apiaryId); // Load items immediately
       return controller;
     });
 
