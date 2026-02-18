@@ -10,16 +10,10 @@ class InventoryController extends StateNotifier<InventoryState> {
 
   InventoryController(this._repository) : super(const InventoryState());
 
-  Future<void> loadInventoryItems({required String apiaryId}) async { // Changed to String
+  Future<void> loadInventoryItems({required String apiaryId}) async {
     print('loadInventoryItems called for apiaryId: $apiaryId');
     state = state.copyWith(isLoading: true, errorMessage: null);
     final result = await _repository.getInventoryItems(apiaryId: apiaryId);
-    final summaryResult = await _repository.getInventorySummary(
-      apiaryId: apiaryId,
-    );
-    final lowStockResult = await _repository.getLowStockItems(
-      apiaryId: apiaryId,
-    );
 
     result.fold(
       (failure) => state = state.copyWith(
@@ -27,26 +21,32 @@ class InventoryController extends StateNotifier<InventoryState> {
         isLoading: false,
       ),
       (items) {
-        summaryResult.fold(
-          (summaryFailure) => state = state.copyWith(
-            errorMessage: _mapFailureToMessage(summaryFailure),
-            isLoading: false,
-          ),
-          (summary) {
-            lowStockResult.fold(
-              (lowStockFailure) => state = state.copyWith(
-                errorMessage: _mapFailureToMessage(lowStockFailure),
-                isLoading: false,
-              ),
-              (lowStock) => state = state.copyWith(
-                inventoryItems: items,
-                inventorySummary: summary,
-                lowStockItems: lowStock,
-                isLoading: false,
-                errorMessage: null,
-              ),
-            );
-          },
+        // Calculate summary and low stock locally to avoid 404s from non-existent endpoints
+        int totalQuantity = 0;
+        final lowStockItems = <InventoryItem>[];
+
+        for (var item in items) {
+          totalQuantity += item.quantity;
+          if (item.quantity < 4) {
+            lowStockItems.add(item);
+          }
+        }
+
+        final summary = {
+          'total_items': items.length,
+          'total_quantity': totalQuantity,
+          'low_stock_items': lowStockItems.length,
+          'in_stock_items': items.where((i) => i.quantity > 0).length,
+          'out_of_stock_items': items.where((i) => i.quantity <= 0).length,
+          'updated_at': DateTime.now().toIso8601String(),
+        };
+
+        state = state.copyWith(
+          inventoryItems: items,
+          inventorySummary: summary,
+          lowStockItems: lowStockItems,
+          isLoading: false,
+          errorMessage: null,
         );
       },
     );
@@ -79,7 +79,11 @@ class InventoryController extends StateNotifier<InventoryState> {
     }
   }
 
-  Future<String?> eliminarInsumo(String itemId, {required String apiaryId}) async { // Changed to String
+  Future<String?> eliminarInsumo(
+    String itemId, {
+    required String apiaryId,
+  }) async {
+    // Changed to String
     final result = await _repository.deleteInventoryItem(itemId);
     return result.fold((failure) => _mapFailureToMessage(failure), (_) {
       loadInventoryItems(apiaryId: apiaryId); // Reload inventory after deletion
@@ -105,13 +109,15 @@ class InventoryController extends StateNotifier<InventoryState> {
 
 // Update inventory_providers.dart with this provider
 final inventoryControllerProvider =
-    StateNotifierProvider.family<InventoryController, InventoryState, String>(( // Changed to String
+    StateNotifierProvider.family<InventoryController, InventoryState, String>((
+      // Changed to String
       ref,
       apiaryId,
     ) {
       final repository = ref.read(inventoryRepositoryProvider);
       final controller = InventoryController(repository);
-      controller.loadInventoryItems(apiaryId: apiaryId); // Load items immediately
+      controller.loadInventoryItems(
+        apiaryId: apiaryId,
+      ); // Load items immediately
       return controller;
     });
-

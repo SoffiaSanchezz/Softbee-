@@ -190,8 +190,9 @@ class _BeehiveFormDialogState extends ConsumerState<BeehiveFormDialog> {
                   }
 
                   // Validación de duplicados en el frontend
-                  final existingBeehives =
-                      ref.read(beehiveControllerProvider).beehives;
+                  final existingBeehives = ref
+                      .read(beehiveControllerProvider)
+                      .beehives;
                   final isDuplicate = existingBeehives.any(
                     (b) =>
                         b.beehiveNumber == number &&
