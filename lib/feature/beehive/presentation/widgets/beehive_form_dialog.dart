@@ -184,9 +184,24 @@ class _BeehiveFormDialogState extends ConsumerState<BeehiveFormDialog> {
                   if (value == null || value.trim().isEmpty) {
                     return 'Por favor, introduce el número de colmena';
                   }
-                  if (int.tryParse(value) == null) {
+                  final number = int.tryParse(value);
+                  if (number == null) {
                     return 'Debe ser un número válido';
                   }
+
+                  // Validación de duplicados en el frontend
+                  final existingBeehives =
+                      ref.read(beehiveControllerProvider).beehives;
+                  final isDuplicate = existingBeehives.any(
+                    (b) =>
+                        b.beehiveNumber == number &&
+                        b.id != widget.beehiveToEdit?.id,
+                  );
+
+                  if (isDuplicate) {
+                    return 'Ya existe una colmena con este número en el apiario';
+                  }
+
                   return null;
                 },
               ),
