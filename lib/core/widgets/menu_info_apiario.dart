@@ -118,7 +118,7 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
             children: [
               IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                onPressed: () => context.pop(),
+                onPressed: () => context.go(AppRoutes.dashboardRoute),
                 color: const Color(0xFF333333),
               ),
               const SizedBox(width: 8),
