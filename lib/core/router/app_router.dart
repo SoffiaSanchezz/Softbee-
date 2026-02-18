@@ -111,7 +111,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'inventory',
             name: AppRoutes.inventoryRoute,
             builder: (context, state) {
-              final apiaryId = state.pathParameters['apiaryId'] as String; // Changed back to String
+              final apiaryId =
+                  state.pathParameters['apiaryId']
+                      as String; // Changed back to String
               return InventoryManagementPage(
                 apiaryId: apiaryId,
               ); // Use new page
