@@ -6,10 +6,10 @@ final dioClientProvider = Provider<Dio>((ref) {
   // Para emulador de Android, usa 10.0.2.2 para referirte al localhost de la máquina host.
   // Para iOS y web, 'localhost' funciona bien.
   final baseUrl = kIsWeb
-      ? 'http://localhost:5000'
+      ? 'http://127.0.0.1:5000'
       : (defaultTargetPlatform == TargetPlatform.android
             ? 'http://10.0.2.2:5000'
-            : 'http://localhost:5000');
+            : 'http://127.0.0.1:5000');
 
   final BaseOptions options = BaseOptions(
     baseUrl: baseUrl,

@@ -56,7 +56,7 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
         description: 'Estado de colmenas en tiempo real',
         icon: Icons.monitor_heart_rounded,
         color: AppColors.primaryYellow,
-        routeName: AppRoutes.monitoringRoute,
+        routeName: AppRoutes.monitoringOverviewRoute,
       ),
       MenuItemData(
         title: 'Inventario',
@@ -64,6 +64,13 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
         icon: Icons.inventory_rounded,
         color: AppColors.primaryYellow,
         routeName: AppRoutes.inventoryRoute,
+      ),
+      MenuItemData(
+        title: 'Preguntas',
+        description: 'Banco de preguntas del apiario',
+        icon: Icons.library_books_rounded,
+        color: AppColors.primaryYellow,
+        routeName: AppRoutes.questionsManagementRoute,
       ),
       MenuItemData(
         title: 'Reportes',
@@ -159,17 +166,20 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
         final isSmallScreen = constraints.maxWidth < 600;
 
         if (isSmallScreen) {
-          // Pantallas pequeñas: Grid de 2x2
+          // Pantallas pequenas: Grid de 2 columnas, cards mas compactas
           return Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
             child: GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.9,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.05,
               ),
               itemCount: _menuItems.length,
               itemBuilder: (context, index) {
@@ -188,6 +198,10 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
                         context.goNamed(
                           item.routeName,
                           pathParameters: {'apiaryId': widget.apiaryId},
+                          queryParameters: {
+                            'apiaryName': widget.apiaryName,
+                            'apiaryLocation': widget.apiaryLocation ?? '',
+                          },
                         );
                       },
                     )
@@ -204,15 +218,20 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
             ),
           );
         } else {
-          // Pantallas medianas/grandes: Fila horizontal que ocupa todo el ancho
+          // Pantallas medianas y grandes: Cards en fila horizontal que llenan todo el ancho
+          final horizontalPadding = constraints.maxWidth >= 1200 ? 12.0 : 8.0;
+          final cardSpacing = constraints.maxWidth >= 1200 ? 8.0 : 5.0;
+
           return Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
               vertical: 16.0,
             ),
             child: Center(
-              child: SizedBox(
-                height: _getCardHeight(constraints.maxWidth),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: _getCardHeight(constraints.maxWidth),
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: _menuItems.asMap().entries.map((entry) {
@@ -222,7 +241,10 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
                     return Expanded(
                       child: Padding(
                         padding: EdgeInsets.only(
-                          right: index < _menuItems.length - 1 ? 20 : 0,
+                          left: index == 0 ? 0 : cardSpacing,
+                          right: index == _menuItems.length - 1
+                              ? 0
+                              : cardSpacing,
                         ),
                         child:
                             EnhancedMenuButton(
@@ -241,6 +263,11 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
                                       item.routeName,
                                       pathParameters: {
                                         'apiaryId': widget.apiaryId,
+                                      },
+                                      queryParameters: {
+                                        'apiaryName': widget.apiaryName,
+                                        'apiaryLocation':
+                                            widget.apiaryLocation ?? '',
                                       },
                                     );
                                   },
@@ -271,11 +298,11 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
 
   double _getCardHeight(double screenWidth) {
     if (screenWidth >= 1200) {
-      return 220;
+      return 280;
     } else if (screenWidth >= 900) {
-      return 200;
+      return 250;
     } else {
-      return 180;
+      return 220;
     }
   }
 }
@@ -356,7 +383,7 @@ class _EnhancedMenuButtonState extends State<EnhancedMenuButton>
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutQuart,
             transform: Matrix4.identity()
-              ..translate(0.0, widget.isHovered ? -8.0 : 0.0),
+              ..translate(0.0, widget.isHovered ? -8.0 : 0.0, 0.0),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [AppColors.accentYellow, AppColors.primaryYellow],
@@ -366,7 +393,9 @@ class _EnhancedMenuButtonState extends State<EnhancedMenuButton>
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: widget.color.withOpacity(widget.isHovered ? 0.4 : 0.2),
+                  color: widget.color.withAlpha(
+                    (255 * (widget.isHovered ? 0.4 : 0.2)).round(),
+                  ),
                   blurRadius: widget.isHovered ? 20 : 12,
                   offset: Offset(0, widget.isHovered ? 12 : 6),
                 ),
@@ -378,20 +407,20 @@ class _EnhancedMenuButtonState extends State<EnhancedMenuButton>
                 children: [
                   // Icono de fondo decorativo
                   Positioned(
-                    right: widget.isCompact ? -20 : -30,
-                    bottom: widget.isCompact ? -20 : -30,
+                    right: widget.isCompact ? -20 : -35,
+                    bottom: widget.isCompact ? -20 : -35,
                     child: Opacity(
                       opacity: 0.15,
                       child: Icon(
                         widget.icon,
-                        size: widget.isCompact ? 100 : 140,
+                        size: widget.isCompact ? 100 : 180,
                         color: Colors.white,
                       ),
                     ),
                   ),
                   // Contenido principal
                   Padding(
-                    padding: EdgeInsets.all(widget.isCompact ? 16.0 : 20.0),
+                    padding: EdgeInsets.all(widget.isCompact ? 14.0 : 22.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -403,39 +432,43 @@ class _EnhancedMenuButtonState extends State<EnhancedMenuButton>
                               // Icono en contenedor
                               Container(
                                 padding: EdgeInsets.all(
-                                  widget.isCompact ? 10 : 12,
+                                  widget.isCompact ? 8 : 14,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withAlpha(
+                                    (255 * 0.2).round(),
+                                  ),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Icon(
                                   widget.icon,
                                   color: Colors.white,
-                                  size: widget.isCompact ? 24 : 28,
+                                  size: widget.isCompact ? 22 : 32,
                                 ),
                               ),
-                              SizedBox(height: widget.isCompact ? 12 : 16),
+                              SizedBox(height: widget.isCompact ? 8 : 16),
                               // Titulo
                               Text(
                                 widget.title,
                                 style: GoogleFonts.poppins(
-                                  fontSize: widget.isCompact ? 16 : 18,
+                                  fontSize: widget.isCompact ? 14 : 20,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              SizedBox(height: widget.isCompact ? 4 : 8),
+                              SizedBox(height: widget.isCompact ? 2 : 6),
                               // Descripcion
                               Flexible(
                                 child: Text(
                                   widget.description,
                                   style: GoogleFonts.poppins(
-                                    fontSize: widget.isCompact ? 11 : 13,
-                                    color: Colors.white.withOpacity(0.9),
-                                    height: 1.3,
+                                    fontSize: widget.isCompact ? 10 : 14,
+                                    color: Colors.white.withAlpha(
+                                      (255 * 0.9).round(),
+                                    ),
+                                    height: 1.4,
                                   ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,

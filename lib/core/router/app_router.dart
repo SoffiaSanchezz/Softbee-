@@ -1,4 +1,7 @@
+import 'package:Softbee/feature/monitoring/presentation/pages/questions_management_page.dart';
+import 'package:Softbee/feature/beehive/presentation/pages/beehive_management_page.dart';
 import 'package:Softbee/core/widgets/menu_info_apiario.dart';
+import 'package:Softbee/feature/monitoring/presentation/pages/monitoring_overview_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -10,12 +13,9 @@ import '../pages/not_found_page.dart';
 import '../pages/landing_page.dart';
 import '../../feature/auth/presentation/pages/user_management_page.dart';
 
-// import '../../feature/apiaries/presentation/widgets/apiary_dashboard_menu.dart';
-import '../../feature/apiaries/presentation/pages/monitoring_page.dart';
-import '../../feature/apiaries/presentation/pages/inventory_page.dart';
+import '../../feature/inventory/presentation/pages/inventory_management_page.dart'; // NEW INVENTORY PAGE
 import '../../feature/apiaries/presentation/pages/reports_page.dart';
 import '../../feature/apiaries/presentation/pages/history_page.dart';
-import '../../feature/apiaries/presentation/pages/hives_page.dart';
 import '../../feature/apiaries/presentation/pages/apiary_settings_page.dart';
 import '../widgets/dashboard_menu.dart';
 
@@ -77,19 +77,56 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
         routes: [
           GoRoute(
-            path: 'monitoring',
-            name: AppRoutes.monitoringRoute, // Usar nombre para la ruta
+            path: 'monitoring', // This path now leads to the overview page
+            name: AppRoutes.monitoringOverviewRoute, // Renamed
             builder: (context, state) {
               final apiaryId = state.pathParameters['apiaryId'] as String;
-              return MonitoringPage(apiaryId: apiaryId);
+              final apiaryName = state.uri.queryParameters['apiaryName'];
+              final apiaryLocation =
+                  state.uri.queryParameters['apiaryLocation'];
+              return MonitoringOverviewPage(
+                apiaryId: apiaryId,
+                apiaryName: apiaryName,
+                apiaryLocation: apiaryLocation,
+              );
             },
+            routes: [
+              GoRoute(
+                path: 'beehives', // Nested route for beehive management
+                name: AppRoutes.beehiveManagementRoute, // New route name
+                builder: (context, state) {
+                  final apiaryId = state.pathParameters['apiaryId'] as String;
+                  final apiaryName =
+                      state.uri.queryParameters['apiaryName'] ??
+                      'Apiario'; // Get apiaryName
+                  return ColmenasManagementScreen(
+                    apiaryId: apiaryId,
+                    apiaryName: apiaryName,
+                  ); // Pass apiaryName
+                },
+              ),
+              GoRoute(
+                path: 'questions',
+                name: AppRoutes.questionsManagementRoute,
+                builder: (context, state) {
+                  final apiaryId = state.pathParameters['apiaryId']!;
+                  return QuestionsManagementScreen(apiaryId: apiaryId);
+                },
+              ),
+
+              // Other monitoring sub-options (e.g., 'questions', 'maya') can be added here
+            ],
           ),
           GoRoute(
             path: 'inventory',
             name: AppRoutes.inventoryRoute,
             builder: (context, state) {
-              final apiaryId = state.pathParameters['apiaryId'] as String;
-              return InventoryPage(apiaryId: apiaryId);
+              final apiaryId =
+                  state.pathParameters['apiaryId']
+                      as String; // Changed back to String
+              return InventoryManagementPage(
+                apiaryId: apiaryId,
+              ); // Use new page
             },
           ),
           GoRoute(
@@ -106,14 +143,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final apiaryId = state.pathParameters['apiaryId'] as String;
               return HistoryPage(apiaryId: apiaryId);
-            },
-          ),
-          GoRoute(
-            path: 'hives',
-            name: AppRoutes.hivesRoute,
-            builder: (context, state) {
-              final apiaryId = state.pathParameters['apiaryId'] as String;
-              return HivesPage(apiaryId: apiaryId);
             },
           ),
           GoRoute(
