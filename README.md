@@ -107,10 +107,33 @@ La aplicación utiliza una paleta de colores inspirada en la naturaleza y la api
 
 ## 📚 App Documentation
 
-La documentación de la aplicación describe la arquitectura, componentes principales y lineamientos de desarrollo utilizados en el proyecto.
-```bash
-    [dart run build_runner build --delete-conflicting-outputs](https://soffiasanchezz-softbee-app.mintlify.app/introduction)
-```
+<p align="start">
+  La documentación oficial de <strong>Softbee</strong> explica la arquitectura, módulos y funcionamiento interno de la aplicación.
+  Está diseñada para desarrolladores que deseen entender, mantener o contribuir al proyecto.
+</p>
+
+<br>
+
+<p align="start">
+  <a href="https://soffiasanchezz-softbee-app.mintlify.app/introduction">
+    <img src="https://img.icons8.com/fluency/96/book.png" width="60"/>
+    <br><br>
+    <strong>Open Softbee Documentation</strong>
+  </a>
+</p>
+
+<br>
+
+### 📑 Qué encontrarás en la documentación
+
+| Sección | Descripción |
+|--------|-------------|
+| 🚀 Introduction | Visión general del proyecto |
+| 🏗 Architecture | Explicación de Clean Architecture |
+| 🧩 Features | Módulos principales del sistema |
+| 🔌 API Integration | Manejo de servicios HTTP |
+| 🛠 Development Guide | Cómo ejecutar y contribuir |
+
 ---
 
 <p align="center">
