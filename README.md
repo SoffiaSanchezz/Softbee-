@@ -105,6 +105,22 @@ La aplicación utiliza una paleta de colores inspirada en la naturaleza y la api
 
 ---
 
+## 📚 App Documentation
+
+La documentación de la aplicación describe la arquitectura, componentes principales y lineamientos de desarrollo utilizados en el proyecto.
+ ```bash
+    [dart run build_runner build --delete-conflicting-outputs](https://soffiasanchezz-softbee-app.mintlify.app/introduction)
+    ```
+---
+
+
+La aplicación utiliza una paleta de colores inspirada en la naturaleza y la apicultura profesional, con componentes personalizados como el **Honeycomb Loader** para una experiencia de usuario inmersiva.
+
+- **Tipografía:** Google Fonts (Roboto/Oswald).
+- **Animaciones:** `lottie`, `flutter_animate`.
+
+---
+
 <p align="center">
   Desarrollado con ❤️ para la comunidad apícola.
 </p>
