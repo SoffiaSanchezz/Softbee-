@@ -115,7 +115,7 @@ La aplicación utiliza una paleta de colores inspirada en la naturaleza y la api
 <br>
 
 <p align="start">
-  <a href="https://soffiasanchezz-softbee-app.mintlify.app/introduction">
+  <a href="https://soffiasanchezz-softbee-app-55.mintlify.app/introduction">
     <img src="https://img.icons8.com/fluency/96/book.png" width="60"/>
     <br><br>
     <strong>Open Softbee Documentation</strong>
