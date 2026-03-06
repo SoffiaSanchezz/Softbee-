@@ -105,6 +105,37 @@ La aplicación utiliza una paleta de colores inspirada en la naturaleza y la api
 
 ---
 
+## 📚 App Documentation
+
+<p align="start">
+  La documentación oficial de <strong>Softbee</strong> explica la arquitectura, módulos y funcionamiento interno de la aplicación.
+  Está diseñada para desarrolladores que deseen entender, mantener o contribuir al proyecto.
+</p>
+
+<br>
+
+<p align="start">
+  <a href="https://soffiasanchezz-softbee-app-55.mintlify.app/introduction">
+    <img src="https://img.icons8.com/fluency/96/book.png" width="60"/>
+    <br><br>
+    <strong>Open Softbee Documentation</strong>
+  </a>
+</p>
+
+<br>
+
+### 📑 Qué encontrarás en la documentación
+
+| Sección | Descripción |
+|--------|-------------|
+| 🚀 Introduction | Visión general del proyecto |
+| 🏗 Architecture | Explicación de Clean Architecture |
+| 🧩 Features | Módulos principales del sistema |
+| 🔌 API Integration | Manejo de servicios HTTP |
+| 🛠 Development Guide | Cómo ejecutar y contribuir |
+
+---
+
 <p align="center">
   Desarrollado con ❤️ para la comunidad apícola.
 </p>
