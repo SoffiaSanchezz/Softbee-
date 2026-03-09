@@ -174,22 +174,24 @@ class _InventoryManagementPageState
   }
 
   // Método para obtener el ícono según la categoría
-  IconData _getIconForCategory(String category) {
-    switch (category) {
+  IconData _getIconForCategory(String? category) {
+    final cat = category?.trim() ?? 'General';
+    switch (cat) {
       case 'Equipos':
-        return Icons.precision_manufacturing; // Maquinaria / Engranaje
+        return Icons.precision_manufacturing;
       case 'Herramientas':
-        return Icons.handyman; // Herramientas
+        return Icons.handyman;
       case 'Protección':
-        return Icons.security; // Traje / Escudo
+        return Icons.security;
       case 'Medicamentos':
-        return Icons.medication; // Médico / Pastilla
+        return Icons.medication;
       case 'Alimentación':
-        return Icons.opacity; // Gota (Miel / Alimento)
+        return Icons.opacity;
       case 'Cosecha':
-        return Icons.shopping_basket; // Balde / Recolección
+        return Icons.shopping_basket;
+      case 'General':
       default:
-        return Icons.inventory_2; // Por defecto
+        return Icons.inventory_2;
     }
   }
 
@@ -1165,38 +1167,90 @@ class _InventoryManagementPageState
       return _buildEmptyState(state, controller);
     }
 
-    if (isDesktop) {
-      return GridView.builder(
-        padding: EdgeInsets.zero,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 2.0,
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20,
-        ),
-        itemCount: insumosFiltrados.length,
-        itemBuilder: (context, index) {
-          return _buildInsumoCard(
-            insumosFiltrados[index],
-            index,
-            screenType,
-            controller,
-          );
-        },
-      );
-    }
+    final groupedInsumos = _groupInsumos(insumosFiltrados);
+    final sortedCategories = groupedInsumos.keys.toList()..sort();
 
-    return ListView.builder(
-      itemCount: insumosFiltrados.length,
-      itemBuilder: (context, index) {
-        return _buildInsumoCard(
-          insumosFiltrados[index],
-          index,
-          screenType,
-          controller,
-        );
-      },
+    return CustomScrollView(
+      slivers: [
+        for (final category in sortedCategories) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+              child: Row(
+                children: [
+                  Icon(_getIconForCategory(category), color: Colors.amber[800], size: 24),
+                  const SizedBox(width: 12),
+                  Text(
+                    category,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber[900],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Divider(color: Colors.amber.withOpacity(0.3))),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${groupedInsumos[category]!.length} items',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isDesktop)
+            SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 2.2, // Ajustado para que quepa mejor con el nuevo diseño
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return _buildInsumoCard(
+                    groupedInsumos[category]![index],
+                    index,
+                    screenType,
+                    controller,
+                  );
+                },
+                childCount: groupedInsumos[category]!.length,
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return _buildInsumoCard(
+                    groupedInsumos[category]![index],
+                    index,
+                    screenType,
+                    controller,
+                  );
+                },
+                childCount: groupedInsumos[category]!.length,
+              ),
+            ),
+        ],
+        const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+      ],
     );
+  }
+
+  Map<String, List<InventoryItem>> _groupInsumos(List<InventoryItem> items) {
+    final Map<String, List<InventoryItem>> grouped = {};
+    for (var item in items) {
+      if (!grouped.containsKey(item.category)) {
+        grouped[item.category] = [];
+      }
+      grouped[item.category]!.add(item);
+    }
+    return grouped;
   }
 
   Widget _buildInsumoCard(
