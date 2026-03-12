@@ -126,13 +126,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         }
       } else {
         throw Exception(
-          response.data['message'] ?? 'Error de inicio de sesión',
+          response.data['error'] ??
+              response.data['message'] ??
+              'Error de inicio de sesión',
         );
       }
     } on DioException catch (e) {
       if (e.response != null) {
         throw Exception(
-          e.response!.data['message'] ??
+          e.response!.data['error'] ??
+              e.response!.data['message'] ??
               'Error de red: ${e.response!.statusCode}',
         );
       } else {
