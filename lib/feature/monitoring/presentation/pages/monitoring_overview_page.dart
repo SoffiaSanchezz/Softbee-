@@ -444,17 +444,9 @@ class MonitoringOverviewPage extends StatelessWidget {
         backgroundColor: _cardMaya,
         accentColor: _iconMaya,
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Navegar a Maya (TODO)',
-                style: GoogleFonts.poppins(),
-              ),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+          context.goNamed(
+            AppRoutes.mayaChatRoute,
+            pathParameters: {'apiaryId': apiaryId},
           );
         },
       ),
