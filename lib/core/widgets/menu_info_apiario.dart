@@ -63,7 +63,7 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
         description: 'Gestiona materiales y productos',
         icon: Icons.inventory_rounded,
         color: AppColors.primaryYellow,
-        routeName: AppRoutes.inventoryRoute,
+        routeName: AppRoutes.inventoryRoute, 
       ),
       MenuItemData(
         title: 'Reportes',
