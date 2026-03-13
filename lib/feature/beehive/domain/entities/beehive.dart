@@ -12,6 +12,7 @@ class Beehive extends Equatable {
   final String? healthStatus;
   final String? hasProductionChamber;
   final String? observations;
+  final bool treatments;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -27,6 +28,7 @@ class Beehive extends Equatable {
     this.healthStatus,
     this.hasProductionChamber,
     this.observations,
+    this.treatments = false,
     this.createdAt,
     this.updatedAt,
   });
@@ -44,6 +46,7 @@ class Beehive extends Equatable {
       healthStatus: json['health_status'],
       hasProductionChamber: json['has_production_chamber'],
       observations: json['observations'],
+      treatments: json['treatments'] ?? false,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : null,
@@ -66,6 +69,7 @@ class Beehive extends Equatable {
       'health_status': healthStatus,
       'has_production_chamber': hasProductionChamber,
       'observations': observations,
+      'treatments': treatments,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
@@ -83,6 +87,7 @@ class Beehive extends Equatable {
     String? healthStatus,
     String? hasProductionChamber,
     String? observations,
+    bool? treatments,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -98,6 +103,7 @@ class Beehive extends Equatable {
       healthStatus: healthStatus ?? this.healthStatus,
       hasProductionChamber: hasProductionChamber ?? this.hasProductionChamber,
       observations: observations ?? this.observations,
+      treatments: treatments ?? this.treatments,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -116,6 +122,7 @@ class Beehive extends Equatable {
     healthStatus,
     hasProductionChamber,
     observations,
+    treatments,
     createdAt,
     updatedAt,
   ];
