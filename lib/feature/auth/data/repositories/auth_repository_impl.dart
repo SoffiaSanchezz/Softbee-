@@ -94,7 +94,6 @@ class AuthRepositoryImpl implements AuthRepository {
     String apiaryName,
     String location,
     int beehivesCount,
-    bool treatments,
     String token,
   ) async {
     try {
@@ -103,7 +102,6 @@ class AuthRepositoryImpl implements AuthRepository {
         apiaryName,
         location,
         beehivesCount,
-        treatments,
         token,
       );
       return const Right(null);
