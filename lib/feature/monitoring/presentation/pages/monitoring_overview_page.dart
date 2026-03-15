@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -58,10 +59,58 @@ class MonitoringOverviewPage extends StatelessWidget {
             ),
 
             // --- Espacio inferior ---
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Botón Maya Voz
+            FloatingActionButton.extended(
+              heroTag: 'mayaVoiceMon',
+              onPressed: () {
+                context.pushNamed(
+                  AppRoutes.mayaVoiceRoute,
+                  pathParameters: {'apiaryId': apiaryId},
+                );
+              },
+              backgroundColor: const Color(0xFFFBC209),
+              icon: const Icon(Icons.mic, color: Colors.white),
+              label: Text(
+                'Maya Voz',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
+            // Botón Maya Bot
+            FloatingActionButton.extended(
+              heroTag: 'mayaChatMon',
+              onPressed: () {
+                context.pushNamed(
+                  AppRoutes.mayaChatRoute,
+                  pathParameters: {'apiaryId': apiaryId},
+                );
+              },
+              backgroundColor: const Color(0xFFFBC209),
+              icon: const Icon(Icons.auto_awesome, color: Colors.white),
+              label: Text(
+                'Maya Bot',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -437,19 +486,20 @@ class MonitoringOverviewPage extends StatelessWidget {
           );
         },
       ),
-      _MonitoringItem(
-        title: 'Maya',
-        description: 'Asistente de voz para ayudarte con tus apiarios.',
-        icon: Icons.mic_rounded,
-        backgroundColor: _cardMaya,
-        accentColor: _iconMaya,
-        onTap: () {
-          context.goNamed(
-            AppRoutes.mayaChatRoute,
-            pathParameters: {'apiaryId': apiaryId},
-          );
-        },
-      ),
+      // if (!kIsWeb) // Desactivado para pruebas en Web
+        _MonitoringItem(
+          title: 'Maya',
+          description: 'Asistente de voz para ayudarte con tus apiarios.',
+          icon: Icons.mic_rounded,
+          backgroundColor: _cardMaya,
+          accentColor: _iconMaya,
+          onTap: () {
+            context.goNamed(
+              AppRoutes.mayaVoiceRoute,
+              pathParameters: {'apiaryId': apiaryId},
+            );
+          },
+        ),
     ];
   }
 }
