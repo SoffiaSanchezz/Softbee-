@@ -3,6 +3,7 @@ import 'package:Softbee/feature/beehive/presentation/pages/beehive_management_pa
 import 'package:Softbee/core/widgets/menu_info_apiario.dart';
 import 'package:Softbee/feature/monitoring/presentation/pages/monitoring_overview_page.dart';
 import 'package:Softbee/feature/maya/presentation/pages/maya_chat_page.dart';
+import 'package:Softbee/feature/monitoring/presentation/pages/maya_voice_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -43,9 +44,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     refreshListenable: notifier,
-    initialLocation: kIsWeb
-        ? AppRoutes.landingRoute
-        : AppRoutes.loginRoute, // Lógica de detección de plataforma
+    initialLocation: AppRoutes.loginRoute, // Desactivado kIsWeb para pruebas
     routes: [
       GoRoute(
         path: AppRoutes.landingRoute, // Ruta para Landing Page
@@ -120,6 +119,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) {
                   final apiaryId = state.pathParameters['apiaryId']!;
                   return MayaChatPage(apiaryId: apiaryId);
+                },
+              ),
+              GoRoute(
+                path: 'maya-voice',
+                name: AppRoutes.mayaVoiceRoute,
+                builder: (context, state) {
+                  final apiaryId = state.pathParameters['apiaryId']!;
+                  return MayaVoicePage(apiaryId: apiaryId);
                 },
               ),
 
