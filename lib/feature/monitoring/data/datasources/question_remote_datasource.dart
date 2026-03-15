@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import '../../domain/entities/question_model.dart';
+import '../../domain/entities/hive_question.dart';
 
 abstract class QuestionRemoteDataSource {
   Future<List<Pregunta>> getPreguntas(String apiaryId, String token);
+  Future<List<HiveQuestion>> getHiveQuestions(String hiveId, String token);
   Future<Pregunta> createPregunta(Pregunta pregunta, String token);
   Future<Pregunta> updatePregunta(Pregunta pregunta, String token);
   Future<void> deletePregunta(String id, String token);
@@ -36,6 +38,26 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
     } on DioException catch (e) {
       throw Exception(
         e.response?.data['message'] ?? 'Error obteniendo preguntas',
+      );
+    }
+  }
+
+  @override
+  Future<List<HiveQuestion>> getHiveQuestions(String hiveId, String token) async {
+    try {
+      final response = await httpClient.get(
+        '/api/v1/questions/hive/$hiveId',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map<HiveQuestion>(
+            (json) => HiveQuestion.fromJson(Map<String, dynamic>.from(json)),
+          )
+          .toList();
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Error obteniendo preguntas de colmena',
       );
     }
   }
