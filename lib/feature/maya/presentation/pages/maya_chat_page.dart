@@ -1,10 +1,15 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lottie/lottie.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../providers/maya_providers.dart';
 import '../widgets/chat_bubble.dart';
+import '../../domain/entities/chat_message.dart';
 
 class MayaChatPage extends ConsumerStatefulWidget {
   final String apiaryId;
@@ -17,11 +22,31 @@ class MayaChatPage extends ConsumerStatefulWidget {
 class _MayaChatPageState extends ConsumerState<MayaChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+  late FlutterTts _flutterTts;
+  bool _isTtsEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _speech = stt.SpeechToText();
+    _initTts();
+  }
+
+  void _initTts() {
+    _flutterTts = FlutterTts();
+    _flutterTts.setLanguage("es-ES");
+    _flutterTts.setPitch(1.0);
+    _flutterTts.setSpeechRate(0.5);
+  }
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _flutterTts.stop();
     super.dispose();
   }
 
@@ -37,14 +62,64 @@ class _MayaChatPageState extends ConsumerState<MayaChatPage> {
     });
   }
 
+  Future<void> _speak(String text) async {
+    if (_isTtsEnabled) {
+      await _flutterTts.speak(text);
+    }
+  }
+
+  Future<void> _listen() async {
+    if (!_isListening) {
+      if (!kIsWeb) {
+        // Solicitar permiso de micrófono explícitamente solo en plataformas nativas
+        var status = await Permission.microphone.status;
+        if (status.isDenied) {
+          status = await Permission.microphone.request();
+          if (!status.isGranted) return;
+        }
+      }
+
+      bool available = await _speech.initialize(
+        onStatus: (val) {
+          if (val == 'done' || val == 'notListening') {
+            if (mounted) setState(() => _isListening = false);
+          }
+        },
+        onError: (val) {
+          if (mounted) setState(() => _isListening = false);
+        },
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            _messageController.text = val.recognizedWords;
+            if (val.finalResult) {
+              _isListening = false;
+              _handleSend();
+            }
+          }),
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final mayaState = ref.watch(mayaControllerProvider);
     
-    // Auto-scroll al recibir mensajes
+    // Auto-scroll al recibir mensajes y hablar si es necesario
     ref.listen(mayaControllerProvider, (previous, next) {
       if (next.messages.length > (previous?.messages.length ?? 0)) {
         _scrollToBottom();
+        
+        final lastMessage = next.messages.last;
+        if (lastMessage.role == MessageRole.assistant) {
+          _speak(lastMessage.content);
+        }
       }
       if (next.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -71,7 +146,7 @@ class _MayaChatPageState extends ConsumerState<MayaChatPage> {
             ),
             const SizedBox(width: 12),
             Text(
-              'Maya AI',
+              'Maya Bot',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -79,6 +154,15 @@ class _MayaChatPageState extends ConsumerState<MayaChatPage> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isTtsEnabled ? Icons.volume_up : Icons.volume_off,
+              color: Colors.white,
+            ),
+            onPressed: () => setState(() => _isTtsEnabled = !_isTtsEnabled),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -146,6 +230,21 @@ class _MayaChatPageState extends ConsumerState<MayaChatPage> {
       child: SafeArea(
         child: Row(
           children: [
+            GestureDetector(
+              onTap: _listen,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _isListening ? Colors.red : const Color(0xFFFBC209),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _isListening ? Icons.stop : Icons.mic,
+                  color: Colors.white,
+                ),
+              ),
+            ).animate(target: _isListening ? 1 : 0).scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2)),
+            const SizedBox(width: 12),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -155,7 +254,7 @@ class _MayaChatPageState extends ConsumerState<MayaChatPage> {
                 child: TextField(
                   controller: _messageController,
                   decoration: InputDecoration(
-                    hintText: 'Pregúntale algo a Maya...',
+                    hintText: _isListening ? 'Escuchando...' : 'Pregúntale algo a Maya...',
                     hintStyle: GoogleFonts.poppins(color: Colors.grey),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
