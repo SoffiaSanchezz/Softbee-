@@ -15,4 +15,10 @@ abstract class QuestionRepository {
   );
   Future<Either<Failure, void>> loadDefaults(String apiaryId);
   Future<Either<Failure, List<Pregunta>>> getTemplates();
+  Future<Either<Failure, HiveQuestion>> assignQuestionToHive(
+    String hiveId,
+    String apiaryQuestionId,
+    int order,
+  );
+  Future<Either<Failure, void>> unassignQuestionFromHive(String hiveQuestionId);
 }

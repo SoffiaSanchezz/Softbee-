@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import '../models/maya_response_model.dart';
 
 abstract class MayaRemoteDataSource {
   Future<Map<String, dynamic>> askMaya({
@@ -10,6 +9,9 @@ abstract class MayaRemoteDataSource {
     Map<String, dynamic>? context,
     String? token,
   });
+
+  Future<Map<String, dynamic>> iniciarMonitoreoVoz(String hiveId, String token);
+  Future<void> guardarRespuestasVoz(String hiveId, List<Map<String, dynamic>> respuestas, String token);
 }
 
 class MayaRemoteDataSourceImpl implements MayaRemoteDataSource {
@@ -48,6 +50,36 @@ class MayaRemoteDataSourceImpl implements MayaRemoteDataSource {
       throw Exception(
         e.response?.data['error'] ?? 'Error comunicándose con Maya',
       );
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> iniciarMonitoreoVoz(String hiveId, String token) async {
+    try {
+      final response = await httpClient.post(
+        '/api/v1/maya/iniciar-monitoreo',
+        data: {'hive_id': hiveId},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['error'] ?? 'Error al iniciar monitoreo');
+    }
+  }
+
+  @override
+  Future<void> guardarRespuestasVoz(String hiveId, List<Map<String, dynamic>> respuestas, String token) async {
+    try {
+      await httpClient.post(
+        '/api/v1/maya/guardar-respuestas',
+        data: {
+          'hive_id': hiveId,
+          'respuestas': respuestas,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['error'] ?? 'Error al guardar respuestas');
     }
   }
 }

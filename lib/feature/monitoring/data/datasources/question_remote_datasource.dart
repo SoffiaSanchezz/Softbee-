@@ -15,6 +15,13 @@ abstract class QuestionRemoteDataSource {
   );
   Future<void> loadDefaults(String apiaryId, String token);
   Future<List<Pregunta>> getTemplates(String token);
+  Future<HiveQuestion> assignQuestionToHive(
+    String hiveId,
+    String apiaryQuestionId,
+    int order,
+    String token,
+  );
+  Future<void> unassignQuestionFromHive(String hiveQuestionId, String token);
 }
 
 class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
@@ -156,6 +163,48 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
     } on DioException catch (e) {
       throw Exception(
         e.response?.data['message'] ?? 'Error reordenando preguntas',
+      );
+    }
+  }
+
+  @override
+  Future<HiveQuestion> assignQuestionToHive(
+    String hiveId,
+    String apiaryQuestionId,
+    int order,
+    String token,
+  ) async {
+    try {
+      final response = await httpClient.post(
+        '/api/v1/questions/hive',
+        data: {
+          'hive_id': hiveId,
+          'apiary_question_id': apiaryQuestionId,
+          'display_order': order,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return HiveQuestion.fromJson(response.data);
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Error asignando pregunta a colmena',
+      );
+    }
+  }
+
+  @override
+  Future<void> unassignQuestionFromHive(
+    String hiveQuestionId,
+    String token,
+  ) async {
+    try {
+      await httpClient.delete(
+        '/api/v1/questions/hive/$hiveQuestionId',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Error desasignando pregunta',
       );
     }
   }

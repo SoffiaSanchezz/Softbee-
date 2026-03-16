@@ -6,7 +6,6 @@ import 'package:Softbee/feature/maya/presentation/pages/maya_chat_page.dart';
 import 'package:Softbee/feature/monitoring/presentation/pages/maya_voice_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../feature/auth/presentation/providers/auth_providers.dart';

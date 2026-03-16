@@ -9,6 +9,7 @@ import '../../data/datasources/answer_remote_datasource.dart';
 import '../../data/repositories/answer_repository_impl.dart';
 import '../../domain/repositories/answer_repository.dart';
 import 'questions_controller.dart';
+import 'hive_questions_selection_controller.dart';
 
 final questionRemoteDataSourceProvider = Provider<QuestionRemoteDataSource>((
   ref,
@@ -39,6 +40,14 @@ final questionsControllerProvider =
       ref,
     ) {
       return QuestionsController(ref.read(questionRepositoryProvider));
+    });
+
+final hiveQuestionsSelectionProvider =
+    StateNotifierProvider.autoDispose.family<HiveQuestionsSelectionController, HiveQuestionsSelectionState, String>((
+      ref,
+      hiveId,
+    ) {
+      return HiveQuestionsSelectionController(ref.read(questionRepositoryProvider));
     });
 
 class QuestionsState {

@@ -3,31 +3,34 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'voice_monitoring_state.dart';
-import '../../domain/entities/hive_question.dart';
 import '../../domain/entities/hive_answer.dart';
+import '../../domain/entities/hive_question.dart';
 import '../../domain/repositories/question_repository.dart';
 import '../../domain/repositories/answer_repository.dart';
 import '../../../beehive/domain/repositories/beehive_repository.dart';
 import '../../../beehive/domain/entities/beehive.dart';
+import '../../../../core/services/offline_storage_service.dart';
 import 'questions_providers.dart';
 import '../../../beehive/presentation/providers/beehive_providers.dart';
-import '../../../../core/services/offline_storage_service.dart';
+import '../../../maya/domain/repositories/maya_repository.dart';
+import '../../../maya/presentation/providers/maya_providers.dart';
+import '../../domain/entities/question_model.dart';
 
 final offlineStorageServiceProvider = Provider((ref) => OfflineStorageService());
 
 final voiceMonitoringControllerProvider =
-    StateNotifierProvider.autoDispose<VoiceMonitoringController, VoiceMonitoringState>((ref) {
+    StateNotifierProvider<VoiceMonitoringController, VoiceMonitoringState>((ref) {
   final questionRepo = ref.read(questionRepositoryProvider);
   final answerRepo = ref.read(answerRepositoryProvider);
   final beehiveRepo = ref.read(beehiveRepositoryProvider);
+  final mayaRepo = ref.read(mayaRepositoryProvider); // Added MayaRepo
   final offlineStorage = ref.read(offlineStorageServiceProvider);
   return VoiceMonitoringController(
     questionRepo: questionRepo,
     answerRepo: answerRepo,
     beehiveRepo: beehiveRepo,
+    mayaRepo: mayaRepo,
     offlineStorage: offlineStorage,
   );
 });
@@ -36,122 +39,78 @@ class VoiceMonitoringController extends StateNotifier<VoiceMonitoringState> {
   final QuestionRepository questionRepo;
   final AnswerRepository answerRepo;
   final BeehiveRepository beehiveRepo;
+  final MayaRepository mayaRepo; // Added MayaRepo
   final OfflineStorageService offlineStorage;
 
   late stt.SpeechToText _speech;
   late FlutterTts _flutterTts;
-  late AudioPlayer _audioPlayer;
   bool _speechInitialized = false;
-  bool _isProcessing = false; // PREVENIR DOBLE ACTIVACIÓN
+  bool _isSpeaking = false;
+  bool _isProcessing = false;
+  bool _isDisposed = false; // Flag to prevent ref.read after dispose
   Timer? _listeningTimer;
   Timer? _ttsCompletionTimer;
-  
-  static const int _maxListenSeconds = 30;
-  static const int _silenceTimeout = 8;
+  int _retryCount = 0;
+
+  static const int _silenceTimeout = 7;
+  static const int _maxRetries = 2;
 
   VoiceMonitoringController({
     required this.questionRepo,
     required this.answerRepo,
     required this.beehiveRepo,
+    required this.mayaRepo,
     required this.offlineStorage,
   }) : super(const VoiceMonitoringState()) {
     _speech = stt.SpeechToText();
-    _audioPlayer = AudioPlayer();
     _initTts();
   }
 
   void _initTts() {
     _flutterTts = FlutterTts();
     _flutterTts.setLanguage("es-ES");
-    // _flutterTts.setVoice({"name": "es-es-x-eed-network", "locale": "es-ES"});
     _flutterTts.setPitch(1.1);
     _flutterTts.setSpeechRate(0.45);
-    
-    // IMPORTANTE: Asegurar que se espere a que termine de hablar
     _flutterTts.awaitSpeakCompletion(true);
     
-    _flutterTts.setCompletionHandler(() async {
-      if (!mounted) return;
-      debugPrint("🤖 Maya finished speaking");
-      
-      _ttsCompletionTimer?.cancel();
-      _ttsCompletionTimer = Timer(const Duration(milliseconds: 400), () {
-        if (!mounted) return;
-        
-        if (state.step == MonitoringStep.greeting) {
-          _goToSelectHive();
-        } else if (state.step == MonitoringStep.selectHive || 
-                   state.step == MonitoringStep.askingQuestions) {
-          startListening();
-        }
-      });
+    _flutterTts.setCompletionHandler(() {
+      if (_isDisposed) return;
+      _isSpeaking = false;
+      _onTtsFinished();
     });
 
-    _flutterTts.setErrorHandler((msg) async {
-      debugPrint("🤖 Maya TTS Error: $msg");
-      _isProcessing = false;
-      if (mounted && state.step != MonitoringStep.finished && state.step != MonitoringStep.error) {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) startListening();
-        });
+    _flutterTts.setErrorHandler((msg) {
+      if (_isDisposed) return;
+      _isSpeaking = false;
+      _onTtsFinished();
+    });
+  }
+
+  void _onTtsFinished() {
+    _ttsCompletionTimer?.cancel();
+    _ttsCompletionTimer = Timer(const Duration(milliseconds: 800), () {
+      if (_isDisposed) return;
+      if (state.step == MonitoringStep.greeting) {
+        _goToSelectHive();
+      } else if (state.step == MonitoringStep.selectHive || 
+                 state.step == MonitoringStep.askingQuestions ||
+                 state.step == MonitoringStep.askContinuation) {
+        startListening();
       }
     });
   }
 
-  Future<void> playBeep() async {
-    try {
-      debugPrint("🎵 Maya Playing beep...");
-      // Desactivado temporalmente por error de asset 404
-      // await _audioPlayer.play(AssetSource('audio/beep.mp3'));
-    } catch (e) {
-      debugPrint("🎵 Maya failed to play beep: $e");
-    }
-  }
-
-  Future<bool> _ensureSpeechInitialized() async {
-    if (_speechInitialized) return true;
-    
-    try {
-      debugPrint("🎤 Maya initializing SpeechToText...");
-      _speechInitialized = await _speech.initialize(
-        onStatus: (val) {
-          debugPrint("🎤 Maya Speech Status: $val");
-          if (val == 'done' || val == 'notListening') {
-            if (mounted) state = state.copyWith(isListening: false);
-            _isProcessing = false;
-          }
-        },
-        onError: (val) {
-          debugPrint("🎤 Maya Speech Error: ${val.errorMsg}");
-          if (mounted) {
-            state = state.copyWith(isListening: false);
-            _isProcessing = false;
-            if (val.permanent) _speechInitialized = false;
-          }
-        },
-        debugLogging: false,
-      );
-      return _speechInitialized;
-    } catch (e) {
-      debugPrint("🎤 Maya Speech Init Exception: $e");
-      return false;
-    }
-  }
-
   Future<void> initMonitoring(String apiaryId) async {
-    debugPrint("📋 Initializing monitoring for apiary: $apiaryId");
-    if (mounted) state = state.copyWith(step: MonitoringStep.initial);
+    if (_isDisposed) return;
+    state = state.copyWith(step: MonitoringStep.initial, errorMessage: null);
     
     final hivesResult = await beehiveRepo.getBeehivesByApiary(apiaryId);
-    
     hivesResult.fold(
       (failure) {
-        debugPrint("❌ Error loading hives: ${failure.message}");
-        if (mounted) state = state.copyWith(step: MonitoringStep.error, errorMessage: failure.message);
+        if (!_isDisposed) state = state.copyWith(step: MonitoringStep.error, errorMessage: failure.message);
       },
       (hives) {
-        debugPrint("✅ Loaded ${hives.length} hives");
-        if (mounted) {
+        if (!_isDisposed) {
           state = state.copyWith(availableHives: hives);
           _startFlow();
         }
@@ -160,92 +119,83 @@ class VoiceMonitoringController extends StateNotifier<VoiceMonitoringState> {
   }
 
   void _startFlow() async {
-    if (mounted) state = state.copyWith(step: MonitoringStep.greeting);
-    await _speak("Hola apicultor. Vamos a realizar el monitoreo de la colmena.");
+    if (_isDisposed) return;
+    state = state.copyWith(step: MonitoringStep.greeting);
+    await _speak("Hola apicultor. Vamos a realizar el monitoreo de tus colmenas.");
   }
 
   void _goToSelectHive() async {
-    if (!mounted) return;
+    if (_isDisposed) return;
     state = state.copyWith(step: MonitoringStep.selectHive);
     String hiveNumbers = state.availableHives.map((h) => h.beehiveNumber.toString()).join(", ");
-    await _speak("Por favor, dime el número de la colmena que quieres monitorear. Las disponibles son: $hiveNumbers");
+    await _speak("Por favor dime el número de la colmena que quieres monitorear. Las disponibles son: $hiveNumbers.");
   }
 
   Future<void> _speak(String text) async {
+    if (_isDisposed) return;
     try {
-      debugPrint("🤖 Maya speaking: $text");
+      _isSpeaking = true;
       if (_speech.isListening) {
         await _speech.stop();
-        if (mounted) state = state.copyWith(isListening: false);
+        state = state.copyWith(isListening: false);
       }
+      _isProcessing = false;
       await _flutterTts.speak(text);
+      
+      // Watchdog timer for TTS completion in case OS callback fails
+      _ttsCompletionTimer?.cancel();
+      _ttsCompletionTimer = Timer(Duration(milliseconds: (text.length * 90).clamp(3000, 15000)), () {
+        if (!_isDisposed && _isSpeaking) {
+          _isSpeaking = false;
+          _onTtsFinished();
+        }
+      });
     } catch (e) {
-      debugPrint("🤖 Maya speech synthesis failed: $e");
+      _isSpeaking = false;
     }
   }
 
   Future<void> startListening() async {
-    if (!mounted) return;
-
-    if (_isProcessing || state.isListening || _speech.isListening) {
-      debugPrint("⚠️ Maya Mic already active, skipping...");
-      return;
-    }
+    if (_isDisposed || _isSpeaking || _isProcessing || state.isListening) return;
 
     _isProcessing = true;
-
-    // Comentamos protección kIsWeb temporalmente para pruebas
-    /*
-    if (!kIsWeb) {
-      var status = await Permission.microphone.status;
-      if (status.isDenied) {
-        status = await Permission.microphone.request();
-        if (!status.isGranted) {
-          if (mounted) state = state.copyWith(errorMessage: "Permiso de micrófono denegado");
-          _isProcessing = false;
-          return;
-        }
-      }
+    if (!_speechInitialized) {
+      _speechInitialized = await _speech.initialize(
+        onStatus: (val) {
+          if (!_isDisposed && (val == 'done' || val == 'notListening')) {
+            state = state.copyWith(isListening: false);
+            _isProcessing = false;
+          }
+        },
+        onError: (val) {
+          if (!_isDisposed) {
+            state = state.copyWith(isListening: false);
+            _isProcessing = false;
+          }
+        },
+      );
     }
-    */
 
-    final isReady = await _ensureSpeechInitialized();
-
-    if (isReady && mounted) {
-      debugPrint("🎤 Maya listening for response...");
+    if (_speechInitialized && !_isDisposed) {
       state = state.copyWith(isListening: true, lastRecognizedWords: "");
-      
       _listeningTimer?.cancel();
       _listeningTimer = Timer(const Duration(seconds: _silenceTimeout), () {
-        if (mounted && state.isListening && state.lastRecognizedWords.isEmpty) {
-          debugPrint("🎤 Maya Mic timeout: No speech detected");
+        if (!_isDisposed && state.isListening && state.lastRecognizedWords.isEmpty) {
           _handleTimeout();
         }
       });
 
       await _speech.listen(
-        onResult: (val) async {
-          if (mounted) {
-            if (val.recognizedWords.isNotEmpty) {
-              state = state.copyWith(lastRecognizedWords: val.recognizedWords);
-              _listeningTimer?.cancel();
-            }
-
+        onResult: (val) {
+          if (!_isDisposed) {
+            state = state.copyWith(lastRecognizedWords: val.recognizedWords);
             if (val.finalResult) {
-              debugPrint("👤 User said: ${val.recognizedWords}");
-              await _speech.stop();
-              state = state.copyWith(isListening: false);
               _isProcessing = false;
               _processVoiceInput(val.recognizedWords);
             }
           }
         },
         localeId: "es-ES",
-        listenFor: const Duration(seconds: _maxListenSeconds),
-        pauseFor: const Duration(seconds: 4),
-        partialResults: true,
-        listenMode: stt.ListenMode.confirmation,
-        cancelOnError: true,
       );
     } else {
       _isProcessing = false;
@@ -253,15 +203,16 @@ class VoiceMonitoringController extends StateNotifier<VoiceMonitoringState> {
   }
 
   void _handleTimeout() async {
+    if (_isDisposed) return;
     stopListening();
-    if (!mounted) return;
-    if (state.step == MonitoringStep.selectHive) {
-      await _speak("No te escuché. Por favor, dime el número de la colmena.");
-    } else if (state.step == MonitoringStep.askingQuestions) {
-      final question = state.questions[state.currentQuestionIndex];
-      final questionText = question.apiaryQuestion?.texto ?? "No te escuché.";
-      await _speak("No te escuché. Repito: $questionText");
+    _retryCount++;
+    if (_retryCount > _maxRetries) {
+      _retryCount = 0;
+      await _speak("Finalizaremos el monitoreo por falta de respuesta.");
+      state = state.copyWith(step: MonitoringStep.finished);
+      return;
     }
+    _speak("No te escuché bien. Por favor repite.");
   }
 
   void _processVoiceInput(String input) async {
@@ -269,79 +220,67 @@ class VoiceMonitoringController extends StateNotifier<VoiceMonitoringState> {
       _handleTimeout();
       return;
     }
-
-    if (!mounted) return;
-    
+    if (_isDisposed) return;
+    _retryCount = 0;
     if (state.step == MonitoringStep.selectHive) {
       _handleHiveSelection(input);
     } else if (state.step == MonitoringStep.askingQuestions) {
       _handleQuestionAnswer(input);
+    } else if (state.step == MonitoringStep.askContinuation) {
+      _handleContinuationSelection(input);
     }
   }
 
   void _handleHiveSelection(String input) async {
-    String normalized = input.toLowerCase();
-    debugPrint("🔍 Maya processing hive selection: $normalized");
-    
-    int? hiveNumber = _extractNumber(normalized);
-
+    int? hiveNumber = _extractNumber(input.toLowerCase());
     if (hiveNumber != null) {
       final hive = state.availableHives.firstWhere(
         (h) => h.beehiveNumber == hiveNumber,
         orElse: () => const Beehive(id: '', apiaryId: ''),
       );
-
       if (hive.id.isNotEmpty) {
-        debugPrint("✅ Hive selected: $hiveNumber");
         state = state.copyWith(selectedHive: hive, step: MonitoringStep.loadingQuestions);
         await _speak("Colmena $hiveNumber seleccionada.");
-        _loadQuestions(hive.id);
+        _iniciarMonitoreoDinamico(hive.id);
       } else {
-        debugPrint("⚠️ Hive $hiveNumber not found in available list");
-        await _speak("No encontré la colmena número $hiveNumber en este apiario. Intenta con otra.");
+        await _speak("No encontré la colmena $hiveNumber. Por favor dime otro número.");
       }
     } else {
-      debugPrint("⚠️ Could not parse hive number from: $input");
-      await _speak("No entendí el número. Por favor, dime el número de la colmena.");
+      await _speak("Dime el número de la colmena.");
     }
   }
 
-  int? _extractNumber(String text) {
-    final wordToNum = {
-      "uno": 1, "una": 1, "primer": 1, "primera": 1, "1": 1,
-      "dos": 2, "2": 2, "segunda": 2,
-      "tres": 3, "3": 3, "tercera": 3,
-      "cuatro": 4, "4": 4, "cuarta": 4,
-      "cinco": 5, "5": 5, "quinta": 5,
-      "seis": 6, "6": 6, "siete": 7, "7": 7,
-      "ocho": 8, "8": 8, "nueve": 9, "9": 9, "diez": 10, "10": 10
-    };
-
-    for (var entry in wordToNum.entries) {
-      if (text.contains(entry.key)) return entry.value;
-    }
-
-    final match = RegExp(r'\d+').firstMatch(text);
-    if (match != null) return int.parse(match.group(0)!);
-    
-    return null;
-  }
-
-  void _loadQuestions(String hiveId) async {
-    debugPrint("📋 Loading questions for hive $hiveId...");
-    final questionsResult = await questionRepo.getHiveQuestions(hiveId);
-    
-    questionsResult.fold(
+  void _iniciarMonitoreoDinamico(String hiveId) async {
+    final result = await mayaRepo.iniciarMonitoreoVoz(hiveId);
+    result.fold(
       (failure) {
-        debugPrint("❌ Error loading questions: ${failure.message}");
-        if (mounted) state = state.copyWith(step: MonitoringStep.error, errorMessage: failure.message);
+        if (!_isDisposed) state = state.copyWith(step: MonitoringStep.error, errorMessage: failure.message);
       },
-      (questions) {
-        debugPrint("✅ Loaded ${questions.length} questions");
-        if (mounted) {
+      (data) {
+        final List<dynamic> pList = data['preguntas'];
+        final List<HiveQuestion> questions = pList.map((p) => HiveQuestion(
+          id: p['id'],
+          hiveId: hiveId,
+          apiaryQuestionId: '', // Not strictly needed for the flow
+          displayOrder: 0,
+          isActive: true,
+          apiaryQuestion: Pregunta(
+            id: p['id'],
+            apiarioId: '',
+            texto: p['texto'],
+            tipoRespuesta: p['tipo'],
+            obligatoria: p['obligatoria'] ?? false,
+            orden: 0,
+            opciones: p['opciones'] != null ? List<String>.from(p['opciones']) : null,
+            min: p['min'],
+            max: p['max'],
+          )
+        )).toList();
+
+        if (!_isDisposed) {
           if (questions.isEmpty) {
-            state = state.copyWith(step: MonitoringStep.finished);
-            _speak("No hay preguntas configuradas para esta colmena. Monitoreo finalizado.");
+            _speak("Sin preguntas configuradas. ¿Otra colmena?");
+            state = state.copyWith(step: MonitoringStep.askContinuation);
           } else {
             state = state.copyWith(
               questions: questions,
@@ -349,8 +288,7 @@ class VoiceMonitoringController extends StateNotifier<VoiceMonitoringState> {
               step: MonitoringStep.askingQuestions,
               answers: {},
             );
-            // Pequeña pausa para que termine de hablar el mensaje de selección
-            Future.delayed(const Duration(milliseconds: 800), _askCurrentQuestion);
+            _askCurrentQuestion();
           }
         }
       },
@@ -358,122 +296,151 @@ class VoiceMonitoringController extends StateNotifier<VoiceMonitoringState> {
   }
 
   void _askCurrentQuestion() async {
-    if (!mounted) return;
+    if (_isDisposed) return;
     if (state.currentQuestionIndex >= state.questions.length) {
       _saveAllAnswers();
       return;
     }
-
+    
     final question = state.questions[state.currentQuestionIndex];
-    final total = state.questions.length;
-    final index = state.currentQuestionIndex;
+    final q = question.apiaryQuestion!;
+    String textoVoz = q.texto;
     
-    String prefix = "Pregunta ${index + 1} de $total: ";
-    final questionText = question.apiaryQuestion?.texto ?? "Siguiente pregunta";
+    // Incluir instrucciones dinámicas según tipo
+    if (q.tipoRespuesta == 'opciones' && q.opciones != null) {
+      final opcionesTexto = q.opciones!.asMap().entries.map((e) => 
+        "Opción ${e.key + 1}: ${e.value}"
+      ).join('. ');
+      textoVoz += '. Las opciones son: $opcionesTexto. Di el número de la opción.';
+    } else if (q.tipoRespuesta == 'numero') {
+      textoVoz += '. Di un número entre ${q.min} y ${q.max}.';
+    }
     
-    debugPrint("➡️ Next question: ${index + 1} of $total");
-    await _speak("$prefix $questionText");
+    await _speak(textoVoz);
   }
 
   void _handleQuestionAnswer(String input) async {
-    if (!mounted) return;
+    if (_isDisposed) return;
+    final question = state.questions[state.currentQuestionIndex];
+    final q = question.apiaryQuestion!;
+    String valorProcesado = input;
     
-    final index = state.currentQuestionIndex;
-    final question = state.questions[index];
-    final questionText = question.apiaryQuestion?.texto ?? "pregunta";
+    // Procesar según tipo: Si es opción, permitir decir el número
+    if (q.tipoRespuesta == 'opciones' && q.opciones != null) {
+      final numero = _extractNumber(input);
+      if (numero != null && numero > 0 && numero <= q.opciones!.length) {
+        valorProcesado = q.opciones![numero - 1];
+      }
+    } else if (q.tipoRespuesta == 'numero') {
+      final numero = _extractNumber(input);
+      if (numero != null) {
+        valorProcesado = numero.toString();
+      }
+    }
     
-    debugPrint("✅ Answer recorded: $questionText -> $input");
-    
-    final updatedAnswers = Map<String, String>.from(state.answers);
-    updatedAnswers[question.id] = input;
-    
+    final updatedAnswers = Map<String, String>.from(state.answers)..[question.id] = valorProcesado;
     state = state.copyWith(answers: updatedAnswers);
-
+    
     if (state.currentQuestionIndex < state.questions.length - 1) {
       state = state.copyWith(currentQuestionIndex: state.currentQuestionIndex + 1);
-      // Breve pausa antes de la siguiente pregunta
-      Future.delayed(const Duration(milliseconds: 600), _askCurrentQuestion);
+      _askCurrentQuestion();
     } else {
-      debugPrint("✅ All questions answered. Saving...");
       _saveAllAnswers();
     }
   }
 
-  void _saveAllAnswers() async {
-    if (!mounted) return;
-    state = state.copyWith(step: MonitoringStep.saving);
-    await _speak("Guardando las ${state.answers.length} respuestas en el sistema.");
+  void _handleContinuationSelection(String input) async {
+    final normalized = input.toLowerCase();
+    if (normalized.contains("sí") || normalized.contains("si") || normalized.contains("otra")) {
+      state = state.copyWith(selectedHive: null, questions: [], currentQuestionIndex: 0, answers: {}, step: MonitoringStep.selectHive);
+      _goToSelectHive();
+    } else {
+      await _speak("Monitoreo finalizado. Hasta pronto.");
+      state = state.copyWith(step: MonitoringStep.finished);
+    }
+  }
 
-    final List<HiveAnswer> answersToSave = state.answers.entries.map((e) {
-      return HiveAnswer(
-        id: '',
-        hiveQuestionId: e.key,
-        answer: e.value,
-      );
+  void _saveAllAnswers() async {
+    if (_isDisposed) return;
+    state = state.copyWith(step: MonitoringStep.saving);
+    await _speak("Guardando resultados.");
+    
+    final respuestas = state.answers.entries.map((e) => {
+      'pregunta_id': e.key,
+      'valor': e.value,
     }).toList();
 
-    final result = await answerRepo.createAnswersBatch(answersToSave);
-
+    final result = await mayaRepo.guardarRespuestasVoz(state.selectedHive!.id, respuestas);
+    
     result.fold(
       (failure) async {
-        debugPrint("💾 Maya error saving batch: ${failure.message}");
-        // Intentar guardado offline
-        try {
-          await offlineStorage.saveAnswersLocally({
-            'hive_id': state.selectedHive?.id,
-            'apiary_id': state.selectedHive?.apiaryId,
-            'date': DateTime.now().toIso8601String(),
-            'answers': answersToSave.map((a) => a.toJson()).toList(),
-          });
-          if (mounted) state = state.copyWith(step: MonitoringStep.finished, isOffline: true);
-          await _speak("Guardado localmente por falta de conexión. Monitoreo finalizado.");
-        } catch (e) {
-          debugPrint("💾 Error fatal guardando localmente: $e");
-          if (mounted) state = state.copyWith(step: MonitoringStep.error, errorMessage: "Error guardando datos");
+        // Caching offline en caso de error
+        await offlineStorage.saveAnswersLocally({
+          'hive_id': state.selectedHive?.id,
+          'respuestas': respuestas,
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+        if (!_isDisposed) {
+          state = state.copyWith(step: MonitoringStep.askContinuation, isOffline: true);
+          await _speak("Error de conexión. Lo guardé en el teléfono. ¿Otra colmena?");
         }
       },
-      (savedAnswers) async {
-        debugPrint("💾 Saved ${savedAnswers.length} answers successfully");
-        if (mounted) state = state.copyWith(step: MonitoringStep.finished);
-        await _speak("Monitoreo completado con éxito. Muchas gracias apicultor.");
+      (success) async {
+        if (!_isDisposed) {
+          state = state.copyWith(step: MonitoringStep.askContinuation);
+          await _speak("Guardado con éxito. ¿Otra colmena?");
+        }
       },
     );
+  }
+
+  int? _extractNumber(String text) {
+    final RegExp regExp = RegExp(r'\d+');
+    final match = regExp.firstMatch(text);
+    if (match != null) return int.tryParse(match.group(0)!);
+    final Map<String, int> words = {
+      'uno': 1, 'una': 1, 'primera': 1,
+      'dos': 2, 'segunda': 2,
+      'tres': 3, 'tercera': 3,
+      'cuatro': 4, 'cuarta': 4,
+      'cinco': 5, 'quinta': 5,
+      'seis': 6, 'sexta': 6,
+      'siete': 7, 'séptima': 7,
+      'ocho': 8, 'octava': 8,
+      'nueve': 9, 'novena': 9,
+      'diez': 10, 'décima': 10
+    };
+    for (var entry in words.entries) {
+      if (text.toLowerCase().contains(entry.key)) return entry.value;
+    }
+    return null;
   }
 
   Future<void> syncOfflineData() async {
     try {
       final offlineData = await offlineStorage.getOfflineAnswers();
       if (offlineData.isEmpty) return;
-
-      debugPrint("🔄 Maya syncing offline data...");
       for (var data in offlineData) {
-        final List<dynamic> answersJson = data['answers'];
-        final List<HiveAnswer> answers = answersJson.map((j) => HiveAnswer.fromJson(j)).toList();
-        await answerRepo.createAnswersBatch(answers);
+        final hiveId = data['hive_id'];
+        final List<Map<String, dynamic>> respuestas = List<Map<String, dynamic>>.from(data['respuestas']);
+        await mayaRepo.guardarRespuestasVoz(hiveId, respuestas);
       }
-      
       await offlineStorage.clearOfflineAnswers();
-      debugPrint("✅ Offline data synced successfully");
-    } catch (e) {
-      debugPrint("🔄 Error syncing offline data: $e");
-    }
+    } catch (_) {}
   }
 
   void stopListening() {
-    debugPrint("🎤 Maya forcing Mic stop");
     _speech.stop();
-    _isProcessing = false;
-    if (mounted) state = state.copyWith(isListening: false);
+    if (!_isDisposed) state = state.copyWith(isListening: false);
   }
 
   @override
   void dispose() {
-    debugPrint("👋 Maya VoiceMonitoringController Disposing...");
+    _isDisposed = true;
     _listeningTimer?.cancel();
     _ttsCompletionTimer?.cancel();
     _flutterTts.stop();
     _speech.stop();
-    _audioPlayer.dispose();
     super.dispose();
   }
 }

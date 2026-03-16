@@ -113,4 +113,39 @@ class QuestionRepositoryImpl implements QuestionRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, HiveQuestion>> assignQuestionToHive(
+    String hiveId,
+    String apiaryQuestionId,
+    int order,
+  ) async {
+    try {
+      final token = await localDataSource.getToken();
+      if (token == null) return const Left(AuthFailure('No token found'));
+      final result = await remoteDataSource.assignQuestionToHive(
+        hiveId,
+        apiaryQuestionId,
+        order,
+        token,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> unassignQuestionFromHive(
+    String hiveQuestionId,
+  ) async {
+    try {
+      final token = await localDataSource.getToken();
+      if (token == null) return const Left(AuthFailure('No token found'));
+      await remoteDataSource.unassignQuestionFromHive(hiveQuestionId, token);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

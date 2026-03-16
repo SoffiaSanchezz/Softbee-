@@ -25,8 +25,8 @@ class HiveQuestion extends Equatable {
       apiaryQuestionId: json['apiary_question_id']?.toString() ?? '',
       displayOrder: (json['display_order'] as num?)?.toInt() ?? 0,
       isActive: json['is_active'] ?? true,
-      apiaryQuestion: json['apiary_question'] != null
-          ? Pregunta.fromJson(Map<String, dynamic>.from(json['apiary_question']))
+      apiaryQuestion: (json['apiary_question'] != null || json['apiaryQuestion'] != null)
+          ? Pregunta.fromJson(Map<String, dynamic>.from(json['apiary_question'] ?? json['apiaryQuestion']))
           : null,
     );
   }

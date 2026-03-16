@@ -7,7 +7,8 @@ import 'package:percent_indicator/percent_indicator.dart';
 
 import 'package:Softbee/feature/beehive/domain/entities/beehive.dart';
 import 'package:Softbee/feature/beehive/presentation/providers/beehive_providers.dart';
-import 'package:Softbee/feature/beehive/presentation/widgets/beehive_form_dialog.dart'; // Import the new dialog
+import 'package:Softbee/feature/beehive/presentation/widgets/beehive_form_dialog.dart';
+import 'package:Softbee/feature/monitoring/presentation/pages/hive_questions_selection_page.dart';
 
 class ColmenasManagementScreen extends ConsumerStatefulWidget {
   final String apiaryId;
@@ -698,6 +699,18 @@ class _ColmenasManagementScreenState
                         case 'details':
                           _showColmenaDetails(beehive);
                           break;
+                        case 'questions':
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HiveQuestionsSelectionPage(
+                                apiaryId: widget.apiaryId,
+                                hiveId: beehive.id,
+                                hiveNumber: beehive.beehiveNumber ?? 0,
+                              ),
+                            ),
+                          );
+                          break;
                       }
                     },
                     itemBuilder: (context) => [
@@ -712,6 +725,20 @@ class _ColmenasManagementScreenState
                             ),
                             const SizedBox(width: 8),
                             Text('Editar', style: GoogleFonts.poppins()),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'questions',
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.fact_check_rounded,
+                              color: Colors.orange,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Text('Configurar Preguntas', style: GoogleFonts.poppins()),
                           ],
                         ),
                       ),

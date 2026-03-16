@@ -9,6 +9,7 @@ enum MonitoringStep {
   loadingQuestions,
   askingQuestions,
   saving,
+  askContinuation,
   finished,
   error
 }
@@ -24,6 +25,7 @@ class VoiceMonitoringState extends Equatable {
   final String lastRecognizedWords;
   final String? errorMessage;
   final bool isOffline;
+  final bool hasOfflineData;
 
   const VoiceMonitoringState({
     this.step = MonitoringStep.initial,
@@ -36,6 +38,7 @@ class VoiceMonitoringState extends Equatable {
     this.lastRecognizedWords = '',
     this.errorMessage,
     this.isOffline = false,
+    this.hasOfflineData = false,
   });
 
   VoiceMonitoringState copyWith({
@@ -49,6 +52,7 @@ class VoiceMonitoringState extends Equatable {
     String? lastRecognizedWords,
     String? errorMessage,
     bool? isOffline,
+    bool? hasOfflineData,
   }) {
     return VoiceMonitoringState(
       step: step ?? this.step,
@@ -61,6 +65,7 @@ class VoiceMonitoringState extends Equatable {
       lastRecognizedWords: lastRecognizedWords ?? this.lastRecognizedWords,
       errorMessage: errorMessage,
       isOffline: isOffline ?? this.isOffline,
+      hasOfflineData: hasOfflineData ?? this.hasOfflineData,
     );
   }
 
@@ -76,5 +81,6 @@ class VoiceMonitoringState extends Equatable {
         lastRecognizedWords,
         errorMessage,
         isOffline,
+        hasOfflineData,
       ];
 }

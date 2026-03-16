@@ -33,11 +33,11 @@ class ResponsiveLayout extends StatelessWidget {
   final Widget desktop;
 
   const ResponsiveLayout({
-    Key? key,
+    super.key,
     required this.mobile,
     this.tablet,
     required this.desktop,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +63,7 @@ class ResponsiveLayout extends StatelessWidget {
 class InventoryManagementPage extends ConsumerStatefulWidget {
   final String apiaryId;
 
-  const InventoryManagementPage({Key? key, required this.apiaryId})
-    : super(key: key);
+  const InventoryManagementPage({super.key, required this.apiaryId});
 
   @override
   _InventoryManagementPageState createState() =>
@@ -519,7 +518,7 @@ class _InventoryManagementPageState
                           const SizedBox(width: 12),
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: unidadSeleccionada,
+                              initialValue: unidadSeleccionada,
                               isExpanded: true,
                               decoration: InputDecoration(
                                 labelText: 'Unidad',
@@ -533,7 +532,7 @@ class _InventoryManagementPageState
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: categoriaSeleccionada,
+                        initialValue: categoriaSeleccionada,
                         isExpanded: true,
                         decoration: InputDecoration(
                           labelText: 'Categoría',
@@ -1136,7 +1135,7 @@ class _InventoryManagementPageState
             const SizedBox(height: 16),
             _buildStatItem(
               'Última actualización',
-              '${state.inventorySummary['updated_at'] != null ? 'Hace unos momentos' : 'N/A'}',
+              state.inventorySummary['updated_at'] != null ? 'Hace unos momentos' : 'N/A',
             ),
             const SizedBox(height: 24),
             Text(
@@ -1508,7 +1507,7 @@ class _InventoryManagementPageState
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<String>(
-                value: motivoSeleccionado,
+                initialValue: motivoSeleccionado,
                 isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Motivo', border: OutlineInputBorder()),
                 items: motivos[tipoMovimiento]!.map((m) => DropdownMenuItem(value: m, child: Text(motivoLabels[m]!, overflow: TextOverflow.ellipsis))).toList(),
@@ -1568,8 +1567,11 @@ class _InventoryManagementPageState
                 );
                 if (mounted) {
                   Navigator.pop(context);
-                  if (error != null) _showSnackBar(context, error, Colors.red, Icons.error);
-                  else _showSnackBar(context, 'Movimiento registrado', Colors.green, Icons.check_circle);
+                  if (error != null) {
+                    _showSnackBar(context, error, Colors.red, Icons.error);
+                  } else {
+                    _showSnackBar(context, 'Movimiento registrado', Colors.green, Icons.check_circle);
+                  }
                 }
               },
               child: Text(tipoMovimiento == 'entry' ? 'Cargar Stock' : 'Descargar Stock', style: const TextStyle(color: Colors.white)),

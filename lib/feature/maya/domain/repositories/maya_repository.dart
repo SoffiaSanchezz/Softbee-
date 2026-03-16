@@ -10,4 +10,7 @@ abstract class MayaRepository {
     String provider = 'gemini',
     Map<String, dynamic>? context,
   });
+
+  Future<Either<Failure, Map<String, dynamic>>> iniciarMonitoreoVoz(String hiveId);
+  Future<Either<Failure, void>> guardarRespuestasVoz(String hiveId, List<Map<String, dynamic>> respuestas);
 }

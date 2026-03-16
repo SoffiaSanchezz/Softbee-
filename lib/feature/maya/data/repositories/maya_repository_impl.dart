@@ -40,4 +40,26 @@ class MayaRepositoryImpl implements MayaRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> iniciarMonitoreoVoz(String hiveId) async {
+    try {
+      final token = await localDataSource.getToken();
+      final result = await remoteDataSource.iniciarMonitoreoVoz(hiveId, token ?? '');
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> guardarRespuestasVoz(String hiveId, List<Map<String, dynamic>> respuestas) async {
+    try {
+      final token = await localDataSource.getToken();
+      await remoteDataSource.guardarRespuestasVoz(hiveId, respuestas, token ?? '');
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

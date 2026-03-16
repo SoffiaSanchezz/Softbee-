@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -27,30 +26,49 @@ class _MayaVoicePageState extends ConsumerState<MayaVoicePage> {
   }
 
   @override
+  void dispose() {
+    // Detener cualquier escucha activa al salir
+    ref.read(voiceMonitoringControllerProvider.notifier).stopListening();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(voiceMonitoringControllerProvider);
     final controller = ref.read(voiceMonitoringControllerProvider.notifier);
 
-    // Dynamic message based on step
+    // Mensaje de estado dinámico
     String getStatusMessage() {
       if (state.step == MonitoringStep.error) return "Error: ${state.errorMessage}";
       if (state.step == MonitoringStep.finished) return "Monitoreo finalizado";
-      if (state.isListening) return "Te escucho...";
-      if (state.step == MonitoringStep.loadingQuestions) return "Cargando preguntas...";
-      if (state.step == MonitoringStep.saving) return "Guardando...";
+      if (state.step == MonitoringStep.askContinuation) return "Esperando tu decisión...";
+      if (state.isListening) return "Maya te escucha...";
+      if (state.step == MonitoringStep.loadingQuestions) return "Preparando preguntas...";
+      if (state.step == MonitoringStep.saving) return "Guardando respuestas...";
       return "Maya está lista";
     }
 
     String getCurrentPrompt() {
-      if (state.step == MonitoringStep.greeting) return "Iniciando monitoreo...";
-      if (state.step == MonitoringStep.selectHive) return "¿Qué colmena vamos a revisar?";
-      if (state.step == MonitoringStep.loadingQuestions) return "Buscando configuración...";
+      if (state.step == MonitoringStep.greeting) return "¡Hola! Iniciando flujo de voz...";
+      if (state.step == MonitoringStep.selectHive) {
+        return "¿Qué número de colmena quieres monitorear?";
+      }
+      if (state.step == MonitoringStep.loadingQuestions) return "Cargando configuración de la colmena...";
       if (state.step == MonitoringStep.askingQuestions) {
         if (state.questions.isEmpty) return "";
         final q = state.questions[state.currentQuestionIndex];
-        return q.apiaryQuestion?.texto ?? "";
+        String prompt = q.apiaryQuestion?.texto ?? "";
+        
+        // Mostrar opciones en pantalla si existen
+        if (q.apiaryQuestion?.tipoRespuesta == 'opciones' && q.apiaryQuestion?.opciones != null) {
+          prompt += "\n(Opciones: ${q.apiaryQuestion!.opciones!.join(", ")})";
+        }
+        return prompt;
       }
-      if (state.step == MonitoringStep.finished) return "¡Todo listo!";
+      if (state.step == MonitoringStep.askContinuation) {
+        return "¿Quieres monitorear otra colmena o finalizamos aquí?";
+      }
+      if (state.step == MonitoringStep.finished) return "¡Monitoreo completado con éxito!";
       return "";
     }
 
@@ -59,13 +77,54 @@ class _MayaVoicePageState extends ConsumerState<MayaVoicePage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFBC209),
         elevation: 0,
-        title: Text(
-          'Maya',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Maya',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontSize: 18,
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: state.isOffline ? Colors.grey : Colors.greenAccent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  state.isOffline ? "Modo Offline" : "En línea",
+                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.white70),
+                ),
+              ],
+            ),
+          ],
         ),
+        actions: [
+          if (state.hasOfflineData)
+            IconButton(
+              icon: const Icon(Icons.cloud_upload, color: Colors.white),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Sincronizando datos pendientes...")),
+                );
+                controller.syncOfflineData();
+              },
+            ).animate(onPlay: (c) => c.repeat())
+             .shimmer(duration: 2.seconds, color: Colors.white30)
+          else
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Icon(Icons.cloud_done, color: Colors.white54, size: 20),
+            ),
+        ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
