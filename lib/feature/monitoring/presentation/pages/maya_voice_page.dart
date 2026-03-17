@@ -18,18 +18,11 @@ class _MayaVoicePageState extends ConsumerState<MayaVoicePage> {
   @override
   void initState() {
     super.initState();
+    // Iniciamos el monitoreo inmediatamente al entrar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(voiceMonitoringControllerProvider.notifier).initMonitoring(widget.apiaryId);
-      // Attempt to sync offline data if any
       ref.read(voiceMonitoringControllerProvider.notifier).syncOfflineData();
     });
-  }
-
-  @override
-  void dispose() {
-    // Detener cualquier escucha activa al salir
-    ref.read(voiceMonitoringControllerProvider.notifier).stopListening();
-    super.dispose();
   }
 
   @override
@@ -37,39 +30,32 @@ class _MayaVoicePageState extends ConsumerState<MayaVoicePage> {
     final state = ref.watch(voiceMonitoringControllerProvider);
     final controller = ref.read(voiceMonitoringControllerProvider.notifier);
 
-    // Mensaje de estado dinámico
-    String getStatusMessage() {
-      if (state.step == MonitoringStep.error) return "Error: ${state.errorMessage}";
-      if (state.step == MonitoringStep.finished) return "Monitoreo finalizado";
-      if (state.step == MonitoringStep.askContinuation) return "Esperando tu decisión...";
-      if (state.isListening) return "Maya te escucha...";
-      if (state.step == MonitoringStep.loadingQuestions) return "Preparando preguntas...";
+    // Mensaje descriptivo del estado actual
+    String getStatusInfo() {
+      if (state.step == MonitoringStep.error) return "Error: ${state.errorMessage ?? 'verifica la conexión'}";
       if (state.step == MonitoringStep.saving) return "Guardando respuestas...";
+      if (state.isListening) return "Maya te está escuchando...";
+      if (state.step == MonitoringStep.loadingQuestions) return "Cargando...";
       return "Maya está lista";
     }
 
-    String getCurrentPrompt() {
-      if (state.step == MonitoringStep.greeting) return "¡Hola! Iniciando flujo de voz...";
-      if (state.step == MonitoringStep.selectHive) {
-        return "¿Qué número de colmena quieres monitorear?";
+    // Texto dinámico que muestra lo que Maya está preguntando o diciendo
+    String getMayaText() {
+      switch (state.step) {
+        case MonitoringStep.greeting:
+          return "Iniciando monitoreo...";
+        case MonitoringStep.selectHive:
+          return "¿Qué colmena deseas monitorear?";
+        case MonitoringStep.askingQuestions:
+          if (state.questions.isEmpty || state.currentQuestionIndex >= state.questions.length) return "";
+          return state.questions[state.currentQuestionIndex].apiaryQuestion?.texto ?? "";
+        case MonitoringStep.askContinuation:
+          return "¿Quieres monitorear otra colmena o finalizamos el monitoreo?";
+        case MonitoringStep.finished:
+          return "Monitoreo finalizado";
+        default:
+          return "";
       }
-      if (state.step == MonitoringStep.loadingQuestions) return "Cargando configuración de la colmena...";
-      if (state.step == MonitoringStep.askingQuestions) {
-        if (state.questions.isEmpty) return "";
-        final q = state.questions[state.currentQuestionIndex];
-        String prompt = q.apiaryQuestion?.texto ?? "";
-        
-        // Mostrar opciones en pantalla si existen
-        if (q.apiaryQuestion?.tipoRespuesta == 'opciones' && q.apiaryQuestion?.opciones != null) {
-          prompt += "\n(Opciones: ${q.apiaryQuestion!.opciones!.join(", ")})";
-        }
-        return prompt;
-      }
-      if (state.step == MonitoringStep.askContinuation) {
-        return "¿Quieres monitorear otra colmena o finalizamos aquí?";
-      }
-      if (state.step == MonitoringStep.finished) return "¡Monitoreo completado con éxito!";
-      return "";
     }
 
     return Scaffold(
@@ -77,54 +63,10 @@ class _MayaVoicePageState extends ConsumerState<MayaVoicePage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFBC209),
         elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Maya',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontSize: 18,
-              ),
-            ),
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: state.isOffline ? Colors.grey : Colors.greenAccent,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  state.isOffline ? "Modo Offline" : "En línea",
-                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.white70),
-                ),
-              ],
-            ),
-          ],
+        title: Text(
+          'Asistente Maya',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        actions: [
-          if (state.hasOfflineData)
-            IconButton(
-              icon: const Icon(Icons.cloud_upload, color: Colors.white),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Sincronizando datos pendientes...")),
-                );
-                controller.syncOfflineData();
-              },
-            ).animate(onPlay: (c) => c.repeat())
-             .shimmer(duration: 2.seconds, color: Colors.white30)
-          else
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Icon(Icons.cloud_done, color: Colors.white54, size: 20),
-            ),
-        ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
@@ -135,64 +77,52 @@ class _MayaVoicePageState extends ConsumerState<MayaVoicePage> {
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height -
-                  AppBar().preferredSize.height -
-                  MediaQuery.of(context).padding.top,
-            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Animación Central
+                const SizedBox(height: 20),
+                // --- ANIMACIÓN CENTRAL ---
                 _buildCentralAnimation(state.isListening),
 
                 const SizedBox(height: 40),
 
-                // Pregunta de Maya
-                if (getCurrentPrompt().isNotEmpty)
-                  _buildTextBubble(getCurrentPrompt(), isUser: false),
+                // --- BURBUJA DE MAYA ---
+                if (getMayaText().isNotEmpty)
+                  _buildMessageBubble(getMayaText(), isMaya: true),
 
                 const SizedBox(height: 20),
 
-                // Texto reconocido (Lo que dice el usuario)
+                // --- LO QUE EL USUARIO DICE (STT) ---
                 if (state.lastRecognizedWords.isNotEmpty)
-                  _buildTextBubble(state.lastRecognizedWords, isUser: true),
+                  _buildMessageBubble(state.lastRecognizedWords, isMaya: false),
 
                 const SizedBox(height: 40),
 
-                // Instrucción / Estado
+                // --- ESTADO Y BOTÓN ---
                 Text(
-                  getStatusMessage(),
+                  getStatusInfo(),
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: state.step == MonitoringStep.error
-                        ? Colors.red
-                        : Colors.grey[600],
+                    fontSize: 14,
+                    color: state.step == MonitoringStep.error ? Colors.red : Colors.grey[600],
                     fontStyle: FontStyle.italic,
                   ),
                 ),
 
                 const SizedBox(height: 24),
 
-                // Botón de Micrófono / Acción Final
                 if (state.step == MonitoringStep.finished)
                   ElevatedButton.icon(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text("Volver al Apiario"),
+                    icon: const Icon(Icons.check),
+                    label: const Text("Finalizar"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFBC209),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
-                  ).animate().scale()
+                  )
                 else
                   _buildMicButton(state.isListening, () {
                     if (state.isListening) {
@@ -212,62 +142,47 @@ class _MayaVoicePageState extends ConsumerState<MayaVoicePage> {
   }
 
   Widget _buildCentralAnimation(bool isListening) {
-    if (isListening) {
-      return Lottie.asset(
-        'assets/animations/loader.json',
-        width: 200,
-        height: 200,
-      );
-    }
-    
     return Container(
-      width: 180,
-      height: 180,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFBC209).withOpacity(0.2),
-            blurRadius: 20,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          Icons.auto_awesome,
-          size: 80,
-          color: const Color(0xFFFBC209),
-        ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 2.seconds),
-      ),
+      width: 200,
+      height: 200,
+      child: isListening
+          ? Lottie.asset(
+              'assets/animations/loader.json', // Ruta corregida
+              fit: BoxFit.contain,
+            )
+          : Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: const Color(0xFFFBC209).withOpacity(0.2), blurRadius: 20, spreadRadius: 5),
+                ],
+              ),
+              child: const Icon(Icons.auto_awesome, size: 80, color: Color(0xFFFBC209)),
+            ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 2.seconds),
     );
   }
 
-  Widget _buildTextBubble(String text, {required bool isUser}) {
+  Widget _buildMessageBubble(String text, {required bool isMaya}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: isUser ? const Color(0xFFFBC209) : Colors.white,
+        color: isMaya ? Colors.white : const Color(0xFFFBC209),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Text(
         text,
         textAlign: TextAlign.center,
         style: GoogleFonts.poppins(
-          fontSize: 15,
-          color: isUser ? Colors.white : Colors.black87,
-          fontWeight: isUser ? FontWeight.w600 : FontWeight.normal,
+          fontSize: 16,
+          fontWeight: isMaya ? FontWeight.normal : FontWeight.w600,
+          color: isMaya ? Colors.black87 : Colors.white,
         ),
       ),
-    ).animate().fadeIn().slideY(begin: 0.2, end: 0);
+    ).animate().fadeIn().slideY(begin: 0.1, end: 0);
   }
 
   Widget _buildMicButton(bool isListening, VoidCallback onTap) {
@@ -280,11 +195,7 @@ class _MayaVoicePageState extends ConsumerState<MayaVoicePage> {
           color: isListening ? Colors.red : const Color(0xFFFBC209),
           shape: BoxShape.circle,
           boxShadow: [
-            BoxShadow(
-              color: (isListening ? Colors.red : const Color(0xFFFBC209)).withOpacity(0.4),
-              blurRadius: 15,
-              spreadRadius: 2,
-            ),
+            BoxShadow(color: (isListening ? Colors.red : const Color(0xFFFBC209)).withOpacity(0.4), blurRadius: 15, spreadRadius: 2),
           ],
         ),
         child: Icon(
@@ -292,8 +203,7 @@ class _MayaVoicePageState extends ConsumerState<MayaVoicePage> {
           color: Colors.white,
           size: 40,
         ),
-      ).animate(target: isListening ? 1 : 0)
-       .scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 300.ms, curve: Curves.easeInOut),
+      ).animate(target: isListening ? 1 : 0).scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2)),
     );
   }
 }

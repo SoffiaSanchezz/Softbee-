@@ -27,6 +27,8 @@ class VoiceMonitoringState extends Equatable {
   final bool isOffline;
   final bool hasOfflineData;
 
+  bool get isLoading => step == MonitoringStep.initial || step == MonitoringStep.loadingQuestions || step == MonitoringStep.saving;
+
   const VoiceMonitoringState({
     this.step = MonitoringStep.initial,
     this.availableHives = const [],

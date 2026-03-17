@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class MayaRemoteDataSource {
   Future<Map<String, dynamic>> askMaya({
@@ -61,6 +62,12 @@ class MayaRemoteDataSourceImpl implements MayaRemoteDataSource {
         data: {'hive_id': hiveId},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
+      
+      // LOG SOLICITADO
+      if (kDebugMode) {
+        print("Response iniciar monitoreo: ${response.data}");
+      }
+      
       return response.data;
     } on DioException catch (e) {
       throw Exception(e.response?.data['error'] ?? 'Error al iniciar monitoreo');
