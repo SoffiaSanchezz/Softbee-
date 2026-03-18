@@ -98,9 +98,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   final apiaryName =
                       state.uri.queryParameters['apiaryName'] ??
                       'Apiario'; // Get apiaryName
+                  final isSelectionMode = state.uri.queryParameters['isSelectionMode'] == 'true';
                   return ColmenasManagementScreen(
                     apiaryId: apiaryId,
                     apiaryName: apiaryName,
+                    isSelectionMode: isSelectionMode,
                   ); // Pass apiaryName
                 },
               ),

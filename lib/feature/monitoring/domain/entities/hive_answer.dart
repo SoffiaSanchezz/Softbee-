@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'hive_question.dart';
 
 class HiveAnswer extends Equatable {
   final String id;
@@ -7,6 +8,7 @@ class HiveAnswer extends Equatable {
   final int score;
   final String? answeredBy;
   final DateTime? answeredAt;
+  final HiveQuestion? hiveQuestion; // Relación opcional para mostrar texto
 
   const HiveAnswer({
     required this.id,
@@ -15,6 +17,7 @@ class HiveAnswer extends Equatable {
     this.score = 0,
     this.answeredBy,
     this.answeredAt,
+    this.hiveQuestion,
   });
 
   factory HiveAnswer.fromJson(Map<String, dynamic> json) {
@@ -26,6 +29,9 @@ class HiveAnswer extends Equatable {
       answeredBy: json['answered_by']?.toString(),
       answeredAt: json['answered_at'] != null
           ? DateTime.parse(json['answered_at'])
+          : null,
+      hiveQuestion: json['hive_question'] != null 
+          ? HiveQuestion.fromJson(json['hive_question']) 
           : null,
     );
   }
