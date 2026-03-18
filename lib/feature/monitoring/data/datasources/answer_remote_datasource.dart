@@ -4,6 +4,7 @@ import '../../domain/entities/hive_answer.dart';
 abstract class AnswerRemoteDataSource {
   Future<HiveAnswer> createAnswer(HiveAnswer answer, String token);
   Future<List<HiveAnswer>> createAnswersBatch(List<HiveAnswer> answers, String token);
+  Future<List<HiveAnswer>> getAnswersByHive(String hiveId, String token);
 }
 
 class AnswerRemoteDataSourceImpl implements AnswerRemoteDataSource {
@@ -37,6 +38,20 @@ class AnswerRemoteDataSourceImpl implements AnswerRemoteDataSource {
       return data.map((json) => HiveAnswer.fromJson(json)).toList();
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Error guardando lote de respuestas');
+    }
+  }
+
+  @override
+  Future<List<HiveAnswer>> getAnswersByHive(String hiveId, String token) async {
+    try {
+      final response = await httpClient.get(
+        '/api/v1/answers/hive/$hiveId',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data.map((json) => HiveAnswer.fromJson(json)).toList();
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Error obteniendo respuestas de colmena');
     }
   }
 }

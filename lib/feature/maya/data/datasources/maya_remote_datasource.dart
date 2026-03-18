@@ -81,7 +81,7 @@ class MayaRemoteDataSourceImpl implements MayaRemoteDataSource {
         '/api/v1/maya/guardar-respuestas',
         data: {
           'hive_id': hiveId,
-          'respuestas': respuestas,
+          'answers': respuestas, // EL BACKEND ESPERA 'answers'
         },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
