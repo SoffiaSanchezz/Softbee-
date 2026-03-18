@@ -20,6 +20,7 @@ import '../../feature/apiaries/presentation/pages/history_page.dart';
 import '../../feature/apiaries/presentation/pages/apiary_settings_page.dart';
 import '../widgets/dashboard_menu.dart';
 
+import '../../feature/treatments/presentation/pages/treatments_page.dart';
 import 'app_routes.dart';
 import '../../feature/auth/presentation/router/auth_routes.dart';
 
@@ -168,6 +169,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final apiaryId = state.pathParameters['apiaryId'] as String;
               return ApiarySettingsPage(apiaryId: apiaryId);
+            },
+          ),
+          GoRoute(
+            path: 'treatments',
+            name: AppRoutes.treatmentsRoute,
+            builder: (context, state) {
+              final apiaryId = state.pathParameters['apiaryId'] as String;
+              return TreatmentsPage(apiaryId: apiaryId);
             },
           ),
         ],
