@@ -470,28 +470,43 @@ class VoiceMonitoringController extends StateNotifier<VoiceMonitoringState> {
     state = state.copyWith(step: MonitoringStep.saving);
     await _speak("Guardando respuestas.");
 
-    final respuestas = state.answers.entries.map((e) => {
-      'pregunta_id': e.key,
-      'valor': e.value,
+    // Mapeo correcto para el backend: el backend usa BatchAnswerItemSchema
+    // que requiere: hive_question_id, answer, score (opcional)
+    final respuestas = state.answers.entries.map((e) {
+      final hiveQuestionId = e.key;
+      final valorStr = e.value.toString();
+      
+      // Intentar calcular un score básico si es bool
+      int score = 0;
+      if (valorStr.toLowerCase() == 'si' || valorStr.toLowerCase() == 'true') {
+        score = 10;
+      }
+
+      return {
+        'hive_question_id': hiveQuestionId,
+        'answer': valorStr,
+        'score': score,
+      };
     }).toList();
 
     final result = await mayaRepo.guardarRespuestasVoz(state.selectedHive!.id, respuestas);
     result.fold(
       (failure) async {
+        debugPrint("Maya Voz Error al guardar: ${failure.message}");
         await offlineStorage.saveAnswersLocally({
           'hive_id': state.selectedHive?.id,
-          'respuestas': respuestas,
+          'answers': respuestas, // Usamos nombres estándar
           'timestamp': DateTime.now().toIso8601String(),
         });
         if (!_isDisposed) {
           state = state.copyWith(isOffline: true, hasOfflineData: true, step: MonitoringStep.askContinuation);
-          await _speak("Sin conexión. Guardé los datos localmente. ¿Deseas monitorear otra?");
+          await _speak("Hubo un problema al conectar con el servidor. Guardé los datos localmente. ¿Deseas monitorear otra colmena?");
         }
       },
       (success) async {
         if (!_isDisposed) {
           state = state.copyWith(step: MonitoringStep.askContinuation);
-          await _speak("¡Guardado con éxito! ¿Deseas monitorear otra colmena?");
+          await _speak("Monitoreo guardado exitosamente. ¿Deseas monitorear otra colmena?");
         }
       },
     );

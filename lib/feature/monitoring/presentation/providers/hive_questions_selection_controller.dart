@@ -114,32 +114,45 @@ class HiveQuestionsSelectionController extends StateNotifier<HiveQuestionsSelect
   }
 
   Future<void> toggleQuestion(String hiveId, HiveQuestionSelection selection) async {
-    if (selection.isInherited) return;
-
     state = state.copyWith(isProcessing: true, error: null);
     
-    if (selection.isSelected) {
-      final result = await _repository.unassignQuestionFromHive(selection.hiveQuestionId!);
-      if (!_mounted) return;
-      if (result.isRight) {
-        _updateLocalSelection(selection.pregunta.id, false, null);
+    try {
+      if (selection.isSelected) {
+        // Queremos DESACTIVAR/DESASIGNAR
+        if (selection.hiveQuestionId != null) {
+          final result = await _repository.unassignQuestionFromHive(selection.hiveQuestionId!);
+          if (!_mounted) return;
+          if (result.isRight) {
+            _updateLocalSelection(selection.pregunta.id, false, null);
+          } else {
+            state = state.copyWith(isProcessing: false, error: result.left.message);
+          }
+        } else {
+          // Si no tiene hiveQuestionId pero está seleccionada (porque p.activa era true),
+          // para "desactivarla" en este hive necesitamos que el backend soporte una relación inactiva
+          // o simplemente ignoramos este caso si el backend no permite relaciones explicitamente inactivas.
+          // Por ahora, si no hay ID, no podemos desasignar algo que no existe físicamente como relación.
+          state = state.copyWith(isProcessing: false);
+        }
       } else {
-        state = state.copyWith(isProcessing: false, error: result.left.message);
+        // Queremos ACTIVAR/ASIGNAR
+        final result = await _repository.assignQuestionToHive(
+          hiveId, 
+          selection.pregunta.id, 
+          selection.pregunta.orden
+        );
+        if (!_mounted) return;
+        if (result.isRight) {
+          _updateLocalSelection(selection.pregunta.id, true, result.right.id);
+        } else {
+          state = state.copyWith(isProcessing: false, error: result.left.message);
+        }
       }
-    } else {
-      final result = await _repository.assignQuestionToHive(
-        hiveId, 
-        selection.pregunta.id, 
-        selection.pregunta.orden
-      );
-      if (!_mounted) return;
-      if (result.isRight) {
-        _updateLocalSelection(selection.pregunta.id, true, result.right.id);
-      } else {
-        state = state.copyWith(isProcessing: false, error: result.left.message);
-      }
+    } catch (e) {
+      if (_mounted) state = state.copyWith(error: e.toString());
+    } finally {
+      if (_mounted) state = state.copyWith(isProcessing: false);
     }
-    if (_mounted) state = state.copyWith(isProcessing: false);
   }
 
   Future<void> selectAll(String hiveId, bool select) async {
