@@ -37,4 +37,16 @@ class AnswerRepositoryImpl implements AnswerRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<HiveAnswer>>> getAnswersByHive(String hiveId) async {
+    try {
+      final token = await localDataSource.getToken();
+      if (token == null) return const Left(AuthFailure('No token found'));
+      final result = await remoteDataSource.getAnswersByHive(hiveId, token);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }
