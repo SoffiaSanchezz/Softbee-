@@ -485,6 +485,24 @@ class MonitoringOverviewPage extends StatelessWidget {
           );
         },
       ),
+      _MonitoringItem(
+        title: 'Informes',
+        description: 'Visualiza el historial y resultados de tus monitoreos.',
+        icon: Icons.analytics_rounded,
+        backgroundColor: const Color(0xFFF3E5F5),
+        accentColor: Colors.purple,
+        onTap: () {
+          // Primero seleccionamos la colmena para ver sus informes
+          context.goNamed(
+            AppRoutes.beehiveManagementRoute,
+            pathParameters: {'apiaryId': apiaryId},
+            queryParameters: {
+              'apiaryName': apiaryName ?? '',
+              'isSelectionMode': 'true',
+            },
+          );
+        },
+      ),
       // if (!kIsWeb) // Desactivado para pruebas en Web
         _MonitoringItem(
           title: 'Maya',
