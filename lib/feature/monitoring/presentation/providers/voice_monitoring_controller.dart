@@ -373,13 +373,19 @@ class VoiceMonitoringController extends StateNotifier<VoiceMonitoringState> {
     final q = state.questions[index].apiaryQuestion!;
     String textoVoz = q.texto.trim();
 
-    if (q.tipoRespuesta == 'opciones' && q.opciones != null) {
-      final opcionesTexto = _formatOptionsForSpeech(q.opciones!);
+    // Lógica mejorada para leer opciones según el tipo de respuesta
+    if (q.tipoRespuesta.toLowerCase() == 'opciones' || q.tipoRespuesta.toLowerCase() == 'seleccion') {
+      final opcionesTexto = _formatOptionsForSpeech(q.opciones ?? []);
       if (opcionesTexto.isNotEmpty) {
         textoVoz += ". Las opciones son: $opcionesTexto.";
       }
-    } else if (q.tipoRespuesta == 'numero') {
-      textoVoz += ". Dime un número.";
+    } else if (q.tipoRespuesta.toLowerCase() == 'bool' || q.tipoRespuesta.toLowerCase() == 'si_no') {
+      textoVoz += ". Las opciones son sí o no.";
+    } else if (q.tipoRespuesta.toLowerCase() == 'numero' || q.tipoRespuesta.toLowerCase() == 'cantidad') {
+      textoVoz += ". Por favor, dime un número.";
+      if (q.min != null && q.max != null) {
+        textoVoz += " Entre ${q.min} y ${q.max}.";
+      }
     }
 
     _speak(textoVoz);
