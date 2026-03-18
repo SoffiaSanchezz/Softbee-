@@ -33,11 +33,11 @@ class ResponsiveLayout extends StatelessWidget {
   final Widget desktop;
 
   const ResponsiveLayout({
-    Key? key,
+    super.key,
     required this.mobile,
     this.tablet,
     required this.desktop,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +63,7 @@ class ResponsiveLayout extends StatelessWidget {
 class InventoryManagementPage extends ConsumerStatefulWidget {
   final String apiaryId;
 
-  const InventoryManagementPage({Key? key, required this.apiaryId})
-    : super(key: key);
+  const InventoryManagementPage({super.key, required this.apiaryId});
 
   @override
   _InventoryManagementPageState createState() =>
@@ -1134,7 +1133,7 @@ class _InventoryManagementPageState
             const SizedBox(height: 16),
             _buildStatItem(
               'Última actualización',
-              '${state.inventorySummary['updated_at'] != null ? 'Hace unos momentos' : 'N/A'}',
+              state.inventorySummary['updated_at'] != null ? 'Hace unos momentos' : 'N/A',
             ),
             const SizedBox(height: 24),
             Text(
@@ -1165,38 +1164,90 @@ class _InventoryManagementPageState
       return _buildEmptyState(state, controller);
     }
 
-    if (isDesktop) {
-      return GridView.builder(
-        padding: EdgeInsets.zero,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 2.0,
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20,
-        ),
-        itemCount: insumosFiltrados.length,
-        itemBuilder: (context, index) {
-          return _buildInsumoCard(
-            insumosFiltrados[index],
-            index,
-            screenType,
-            controller,
-          );
-        },
-      );
-    }
+    final groupedInsumos = _groupInsumos(insumosFiltrados);
+    final sortedCategories = groupedInsumos.keys.toList()..sort();
 
-    return ListView.builder(
-      itemCount: insumosFiltrados.length,
-      itemBuilder: (context, index) {
-        return _buildInsumoCard(
-          insumosFiltrados[index],
-          index,
-          screenType,
-          controller,
-        );
-      },
+    return CustomScrollView(
+      slivers: [
+        for (final category in sortedCategories) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+              child: Row(
+                children: [
+                  Icon(_getIconForCategory(category), color: Colors.amber[800], size: 24),
+                  const SizedBox(width: 12),
+                  Text(
+                    category,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber[900],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Divider(color: Colors.amber.withOpacity(0.3))),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${groupedInsumos[category]!.length} items',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isDesktop)
+            SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 2.2, // Ajustado para que quepa mejor con el nuevo diseño
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return _buildInsumoCard(
+                    groupedInsumos[category]![index],
+                    index,
+                    screenType,
+                    controller,
+                  );
+                },
+                childCount: groupedInsumos[category]!.length,
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return _buildInsumoCard(
+                    groupedInsumos[category]![index],
+                    index,
+                    screenType,
+                    controller,
+                  );
+                },
+                childCount: groupedInsumos[category]!.length,
+              ),
+            ),
+        ],
+        const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+      ],
     );
+  }
+
+  Map<String, List<InventoryItem>> _groupInsumos(List<InventoryItem> items) {
+    final Map<String, List<InventoryItem>> grouped = {};
+    for (var item in items) {
+      if (!grouped.containsKey(item.category)) {
+        grouped[item.category] = [];
+      }
+      grouped[item.category]!.add(item);
+    }
+    return grouped;
   }
 
   Widget _buildInsumoCard(
@@ -1240,6 +1291,7 @@ class _InventoryManagementPageState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(8),

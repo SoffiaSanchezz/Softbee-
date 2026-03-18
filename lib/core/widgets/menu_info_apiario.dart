@@ -67,7 +67,7 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
         description: 'Gestiona materiales y productos',
         icon: Icons.inventory_rounded,
         color: AppColors.primaryYellow,
-        routeName: AppRoutes.inventoryRoute,
+        routeName: AppRoutes.inventoryRoute, 
       ),
       MenuItemData(
         title: 'Reportes',
@@ -113,6 +113,54 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
           ),
         ),
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Botón Maya Voz - Siempre a la izquierda
+            FloatingActionButton.extended(
+              heroTag: 'mayaVoice',
+              onPressed: () {
+                context.pushNamed(
+                  AppRoutes.mayaVoiceRoute,
+                  pathParameters: {'apiaryId': widget.apiaryId},
+                );
+              },
+              backgroundColor: const Color(0xFFFBC209),
+              icon: const Icon(Icons.mic, color: Colors.white),
+              label: Text(
+                'Maya Voz',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ).animate().scale(delay: 400.ms, duration: 400.ms, curve: Curves.easeOutBack),
+
+            // Botón Maya Bot - Siempre a la derecha en el Dashboard
+            FloatingActionButton.extended(
+              heroTag: 'mayaChat',
+              onPressed: () {
+                context.pushNamed(
+                  AppRoutes.mayaChatRoute,
+                  pathParameters: {'apiaryId': widget.apiaryId},
+                );
+              },
+              backgroundColor: const Color(0xFFFBC209),
+              icon: const Icon(Icons.auto_awesome, color: Colors.white),
+              label: Text(
+                'Maya Bot',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ).animate().scale(delay: 400.ms, duration: 400.ms, curve: Curves.easeOutBack),
+          ],
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 

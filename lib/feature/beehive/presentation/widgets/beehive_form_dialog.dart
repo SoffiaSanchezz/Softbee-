@@ -430,7 +430,7 @@ class _BeehiveFormDialogState extends ConsumerState<BeehiveFormDialog> {
     required IconData icon,
   }) {
     return DropdownButtonFormField<String?>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),

@@ -13,6 +13,10 @@ abstract class AppRoutes {
       '/apiary-dashboard/:apiaryId/monitoring';
   static const String questionsManagementRoute =
       '/apiary-dashboard/:apiaryId/monitoring/questions';
+  static const String mayaChatRoute =
+      '/apiary-dashboard/:apiaryId/monitoring/maya';
+  static const String mayaVoiceRoute =
+      '/apiary-dashboard/:apiaryId/monitoring/maya-voice';
   static const String beehiveManagementRoute = // New route for beehives
       '/apiary-dashboard/:apiaryId/hives';
   static const String inventoryRoute = '/apiary-dashboard/:apiaryId/inventory';
