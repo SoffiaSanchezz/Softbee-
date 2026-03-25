@@ -1,3 +1,4 @@
+import 'package:Softbee/feature/reports/presentation/pages/apiary_insights_page.dart';
 import 'package:Softbee/feature/monitoring/presentation/pages/questions_management_page.dart';
 import 'package:Softbee/feature/beehive/presentation/pages/beehive_management_page.dart';
 import 'package:Softbee/core/widgets/menu_info_apiario.dart';
@@ -168,6 +169,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final apiaryId = state.pathParameters['apiaryId'] as String;
               return ApiarySettingsPage(apiaryId: apiaryId);
+            },
+          ),
+          GoRoute(
+            path: 'insights',
+            name: AppRoutes.apiaryInsightsRoute,
+            builder: (context, state) {
+              final apiaryId = state.pathParameters['apiaryId'] as String;
+              final apiaryName = state.uri.queryParameters['apiaryName'] ?? 'Apiario';
+              return ApiaryInsightsPage(
+                apiaryId: apiaryId,
+                apiaryName: apiaryName,
+              );
             },
           ),
         ],

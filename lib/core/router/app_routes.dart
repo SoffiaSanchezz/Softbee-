@@ -26,4 +26,6 @@ abstract class AppRoutes {
       '/apiary-dashboard/:apiaryId/hives'; // Keep for now, might be referenced elsewhere
   static const String apiarySettingsRoute =
       '/apiary-dashboard/:apiaryId/settings';
+  static const String apiaryInsightsRoute =
+      '/apiary-dashboard/:apiaryId/insights';
 }
