@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../apiaries/data/services/apiary_insights_service.dart';
+import '../../data/services/apiary_insights_service.dart';
 
 class AdvancedInsightsState {
   final bool isLoading;
