@@ -17,7 +17,6 @@ abstract class AuthRemoteDataSource {
     String apiaryName,
     String location,
     int beehivesCount,
-    bool treatments,
     String token,
   );
 }
@@ -168,7 +167,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     String apiaryName,
     String location,
     int beehivesCount,
-    bool treatments,
     String token,
   ) async {
     try {
@@ -178,7 +176,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'user_id': userId,
           'name': apiaryName,
           'location': location.isEmpty ? null : location, // Send null if empty
-          'treatments': treatments,
           'beehives_count': beehivesCount,
         },
         options: Options(headers: {'Authorization': 'Bearer $token'}),

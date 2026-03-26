@@ -169,6 +169,7 @@ class InventoryRemoteDataSourceImpl implements InventoryRemoteDataSource {
         throw ServerFailure('No se pudo registrar el movimiento');
       }
     } on DioException catch (e) {
+      // Extraemos el mensaje específico enviado por el Backend
       final backendMessage = e.response?.data?['message']?.toString();
       throw ServerFailure(backendMessage ?? 'Error en el servidor: ${e.message}');
     } catch (e) {

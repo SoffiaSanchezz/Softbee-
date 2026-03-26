@@ -28,4 +28,6 @@ abstract class AppRoutes {
       '/apiary-dashboard/:apiaryId/settings';
   static const String apiaryInsightsRoute =
       '/apiary-dashboard/:apiaryId/insights';
+  static const String treatmentsRoute =
+      '/apiary-dashboard/:apiaryId/treatments';
 }
