@@ -74,14 +74,7 @@ class _ApiaryDashboardMenuState extends ConsumerState<ApiaryDashboardMenu>
         description: 'Genera informes de producción',
         icon: Icons.insert_chart_rounded,
         color: AppColors.primaryYellow,
-        routeName: AppRoutes.reportsRoute,
-      ),
-      MenuItemData(
-        title: 'Historial',
-        description: 'Revisa inspecciones pasadas',
-        icon: Icons.history_edu_rounded,
-        color: AppColors.primaryYellow,
-        routeName: AppRoutes.historyRoute,
+        routeName: AppRoutes.apiaryInsightsRoute,
       ),
       MenuItemData(
         title: 'Tratamientos',

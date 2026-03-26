@@ -173,22 +173,24 @@ class _InventoryManagementPageState
   }
 
   // Método para obtener el ícono según la categoría
-  IconData _getIconForCategory(String category) {
-    switch (category) {
+  IconData _getIconForCategory(String? category) {
+    final cat = category?.trim() ?? 'General';
+    switch (cat) {
       case 'Equipos':
-        return Icons.precision_manufacturing; // Maquinaria / Engranaje
+        return Icons.precision_manufacturing;
       case 'Herramientas':
-        return Icons.handyman; // Herramientas
+        return Icons.handyman;
       case 'Protección':
-        return Icons.security; // Traje / Escudo
+        return Icons.security;
       case 'Medicamentos':
-        return Icons.medication; // Médico / Pastilla
+        return Icons.medication;
       case 'Alimentación':
-        return Icons.opacity; // Gota (Miel / Alimento)
+        return Icons.opacity;
       case 'Cosecha':
-        return Icons.shopping_basket; // Balde / Recolección
+        return Icons.shopping_basket;
+      case 'General':
       default:
-        return Icons.inventory_2; // Por defecto
+        return Icons.inventory_2;
     }
   }
 
@@ -516,7 +518,7 @@ class _InventoryManagementPageState
                           const SizedBox(width: 12),
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: unidadSeleccionada,
+                              initialValue: unidadSeleccionada,
                               isExpanded: true,
                               decoration: InputDecoration(
                                 labelText: 'Unidad',
@@ -530,7 +532,7 @@ class _InventoryManagementPageState
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: categoriaSeleccionada,
+                        initialValue: categoriaSeleccionada,
                         isExpanded: true,
                         decoration: InputDecoration(
                           labelText: 'Categoría',
@@ -1331,59 +1333,69 @@ class _InventoryManagementPageState
                           ],
                         ),
                       ),
-                      if (insumo.isExpired)
-                        const Icon(Icons.event_busy, color: Colors.red, size: 20)
-                      else if (estadoCritico)
-                        const Icon(Icons.warning, color: Colors.red, size: 20),
+                      // Alertas y Menú de opciones
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (insumo.isExpired)
+                            const Icon(Icons.event_busy, color: Colors.red, size: 20)
+                          else if (estadoCritico)
+                            const Icon(Icons.warning, color: Colors.red, size: 20),
+                          
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, color: Colors.grey, size: 22),
+                            tooltip: 'Más opciones',
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                _editarInsumo(insumo, controller);
+                              } else if (value == 'delete') {
+                                _eliminarInsumo(id, controller);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.edit_outlined, size: 20, color: Colors.amber[800]),
+                                    const SizedBox(width: 12),
+                                    Text('Editar', style: GoogleFonts.poppins(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete_outline, size: 20, color: Colors.red[700]),
+                                    const SizedBox(width: 12),
+                                    Text('Eliminar', style: GoogleFonts.poppins(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton.icon(
-                          icon: const Icon(Icons.history, size: 16),
-                          label: const Text('Historial'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.blue[700],
-                            side: BorderSide(color: Colors.blue[300]!),
-                          ),
-                          onPressed: () => _mostrarHistorial(insumo, controller),
-                        ),
-                        const SizedBox(width: 8),
-                        OutlinedButton.icon(
-                          icon: const Icon(Icons.sync_alt, size: 16),
-                          label: const Text('Mover'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.orange[700],
-                            side: BorderSide(color: Colors.orange[300]!),
-                          ),
-                          onPressed: () => _mostrarDialogoMovimiento(insumo, controller),
-                        ),
-                        const SizedBox(width: 8),
-                        OutlinedButton.icon(
-                          icon: const Icon(Icons.edit, size: 16),
-                          label: const Text('Editar'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.amber[700],
-                            side: BorderSide(color: Colors.amber[300]!),
-                          ),
-                          onPressed: () => _editarInsumo(insumo, controller),
-                        ),
-                        const SizedBox(width: 8),
-                        OutlinedButton.icon(
-                          icon: const Icon(Icons.delete, size: 16),
-                          label: const Text('Eliminar'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red[700],
-                            side: BorderSide(color: Colors.red[300]!),
-                          ),
-                          onPressed: () => _eliminarInsumo(id, controller),
-                        ),
-                      ],
-                    ),
+                  Row(
+                    children: [
+                      _buildActionChip(
+                        icon: Icons.history,
+                        label: 'Historial',
+                        color: Colors.blue[700]!,
+                        onTap: () => _mostrarHistorial(insumo, controller),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionChip(
+                        icon: Icons.sync_alt,
+                        label: 'Mover',
+                        color: Colors.orange[700]!,
+                        onTap: () => _mostrarDialogoMovimiento(insumo, controller),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1393,6 +1405,41 @@ class _InventoryManagementPageState
         .animate()
         .fadeIn(delay: Duration(milliseconds: index * 100))
         .slideX(begin: 0.2, end: 0);
+  }
+
+  Widget _buildActionChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildActionIcon({
@@ -1460,7 +1507,7 @@ class _InventoryManagementPageState
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<String>(
-                value: motivoSeleccionado,
+                initialValue: motivoSeleccionado,
                 isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Motivo', border: OutlineInputBorder()),
                 items: motivos[tipoMovimiento]!.map((m) => DropdownMenuItem(value: m, child: Text(motivoLabels[m]!, overflow: TextOverflow.ellipsis))).toList(),
@@ -1514,14 +1561,17 @@ class _InventoryManagementPageState
                   itemId: insumo.id,
                   type: tipoMovimiento,
                   quantity: cantidadMovimiento,
-                  reason: motivoSeleccionado,
+                  reason: motivoLabels[motivoSeleccionado] ?? motivoSeleccionado,
                   notes: notasMovController.text,
                   apiaryId: widget.apiaryId,
                 );
                 if (mounted) {
                   Navigator.pop(context);
-                  if (error != null) _showSnackBar(context, error, Colors.red, Icons.error);
-                  else _showSnackBar(context, 'Movimiento registrado', Colors.green, Icons.check_circle);
+                  if (error != null) {
+                    _showSnackBar(context, error, Colors.red, Icons.error);
+                  } else {
+                    _showSnackBar(context, 'Movimiento registrado', Colors.green, Icons.check_circle);
+                  }
                 }
               },
               child: Text(tipoMovimiento == 'entry' ? 'Cargar Stock' : 'Descargar Stock', style: const TextStyle(color: Colors.white)),
@@ -1538,7 +1588,7 @@ class _InventoryManagementPageState
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: MediaQuery.of(context).size.height * 0.75,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -1551,49 +1601,122 @@ class _InventoryManagementPageState
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  const Icon(Icons.history, color: Colors.amber),
+                  const Icon(Icons.history, color: Colors.amber, size: 28),
                   const SizedBox(width: 12),
-                  Text('Auditoría: ${insumo.itemName}', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Historial: ${insumo.itemName}', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('Registro cronológico de cambios', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
+            const Divider(height: 1),
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: controller.obtenerHistorial(insumo.id),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                  if (snapshot.data!.isEmpty) return const Center(child: Text('No hay movimientos registrados'));
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.history_toggle_off, size: 48, color: Colors.grey[300]),
+                          const SizedBox(height: 16),
+                          Text('No hay movimientos registrados', style: GoogleFonts.poppins(color: Colors.grey)),
+                        ],
+                      ),
+                    );
+                  }
                   
                   return ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
                       final mov = snapshot.data![index];
-                      final isEntry = mov['movement_type'] == 'entry';
+                      final String type = mov['movement_type'] ?? '';
+                      final isEntry = type == 'entry' || type == 'create';
                       
-                      // Parseo seguro de la fecha del movimiento
+                      // Determinar icono y color basado en tipo
+                      IconData icon;
+                      Color iconColor;
+                      switch(type) {
+                        case 'create': icon = Icons.add_box; iconColor = Colors.green; break;
+                        case 'entry': icon = Icons.arrow_upward; iconColor = Colors.blue; break;
+                        case 'exit': icon = Icons.arrow_downward; iconColor = Colors.orange; break;
+                        case 'update': icon = Icons.edit_note; iconColor = Colors.purple; break;
+                        case 'delete': icon = Icons.delete_forever; iconColor = Colors.red; break;
+                        default: icon = Icons.sync_alt; iconColor = Colors.grey;
+                      }
+                      
+                      // Parseo seguro de la fecha
                       DateTime date;
                       try {
-                        final dateStr = mov['date'].toString();
-                        date = DateTime.tryParse(dateStr) ?? 
-                               DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", 'en_US').parse(dateStr);
+                        date = DateTime.parse(mov['date']);
                       } catch (e) {
                         date = DateTime.now();
                       }
                       
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: isEntry ? Colors.green[50] : Colors.red[50],
-                          child: Icon(isEntry ? Icons.arrow_upward : Icons.arrow_downward, color: isEntry ? Colors.green : Colors.red, size: 16),
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[200]!),
                         ),
-                        title: Text('${isEntry ? "+" : "-"}${mov['quantity']} ${insumo.unit}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('${mov['reason']} - ${date.day}/${date.month}/${date.year}'),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text('Stock: ${mov['stock_after']}', style: TextStyle(color: Colors.amber[900], fontWeight: FontWeight.bold)),
-                            Text('Antes: ${mov['stock_before']}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                          ],
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: iconColor.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(icon, color: iconColor, size: 20),
+                          ),
+                          title: Row(
+                            children: [
+                              Text(
+                                '${isEntry ? "+" : "-"}${mov['quantity']} ${insumo.unit}',
+                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black87),
+                              ),
+                              const Spacer(),
+                              Text(
+                                DateFormat('dd/MM/yyyy HH:mm').format(date.toLocal()),
+                                style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500]),
+                              ),
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                mov['reason'] ?? 'Sin motivo especificado',
+                                style: GoogleFonts.poppins(fontSize: 13, color: Colors.black54),
+                              ),
+                              if (mov['notes'] != null && mov['notes'].toString().isNotEmpty)
+                                Text(
+                                  'Nota: ${mov['notes']}',
+                                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic),
+                                ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  _buildSmallBadge('Antes: ${mov['stock_before']}', Colors.grey),
+                                  const SizedBox(width: 8),
+                                  _buildSmallBadge('Después: ${mov['stock_after']}', Colors.amber[800]!),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -1603,6 +1726,21 @@ class _InventoryManagementPageState
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSmallBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.poppins(fontSize: 10, color: color, fontWeight: FontWeight.w500),
       ),
     );
   }
